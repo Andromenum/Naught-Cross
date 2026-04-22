@@ -28,10 +28,12 @@ public class AudioManager : MonoBehaviour
         Instance = this;
 
         audioSource = GetComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.loop = true;
+        audioSource.spatialBlend = 0f;
+
         MusicEnabled = PlayerPrefs.GetInt(MusicEnabledKey, 1) == 1;
         MusicVolume = PlayerPrefs.GetFloat(MusicVolumeKey, 1f);
-
-        audioSource.volume = 0f;
     }
 
     private void Start()
@@ -39,11 +41,23 @@ public class AudioManager : MonoBehaviour
         if (audioSource.clip == null)
             return;
 
-        if (!MusicEnabled)
-            return;
-
+        audioSource.volume = MusicVolume;
         audioSource.Play();
-        StartFadeTo(MusicVolume);
+
+        if (MusicEnabled)
+        {
+            audioSource.mute = false;
+
+            if (fadeDuration > 0f)
+            {
+                audioSource.volume = 0f;
+                StartFadeTo(MusicVolume);
+            }
+        }
+        else
+        {
+            audioSource.mute = true;
+        }
     }
 
     public void SetMusicEnabled(bool enabled)
@@ -53,21 +67,13 @@ public class AudioManager : MonoBehaviour
         PlayerPrefs.SetInt(MusicEnabledKey, enabled ? 1 : 0);
         PlayerPrefs.Save();
 
-        if (!enabled)
-        {
-            StopCurrentFade();
-            audioSource.Stop();
-            audioSource.volume = 0f;
-            return;
-        }
-
         if (audioSource.clip == null)
             return;
 
         if (!audioSource.isPlaying)
             audioSource.Play();
 
-        StartFadeTo(MusicVolume);
+        audioSource.mute = !enabled;
     }
 
     public void SetMusicVolume(float volume)
@@ -76,15 +82,6 @@ public class AudioManager : MonoBehaviour
 
         PlayerPrefs.SetFloat(MusicVolumeKey, MusicVolume);
         PlayerPrefs.Save();
-
-        if (!MusicEnabled)
-            return;
-
-        if (audioSource.clip == null)
-            return;
-
-        if (!audioSource.isPlaying)
-            audioSource.Play();
 
         StopCurrentFade();
         audioSource.volume = MusicVolume;

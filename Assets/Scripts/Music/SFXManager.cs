@@ -28,16 +28,25 @@ public class SFXManager : MonoBehaviour
         Instance = this;
 
         audioSource = GetComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.loop = false;
+        audioSource.spatialBlend = 0f;
+
         SfxEnabled = PlayerPrefs.GetInt(SfxEnabledKey, 1) == 1;
         SfxVolume = PlayerPrefs.GetFloat(SfxVolumeKey, 1f);
+
         audioSource.volume = SfxVolume;
+        audioSource.mute = !SfxEnabled;
     }
 
     public void SetSfxEnabled(bool enabled)
     {
         SfxEnabled = enabled;
+
         PlayerPrefs.SetInt(SfxEnabledKey, enabled ? 1 : 0);
         PlayerPrefs.Save();
+
+        audioSource.mute = !enabled;
     }
 
     public void SetSfxVolume(float volume)
@@ -64,6 +73,6 @@ public class SFXManager : MonoBehaviour
         if (!SfxEnabled || clip == null)
             return;
 
-        audioSource.PlayOneShot(clip, SfxVolume);
+        audioSource.PlayOneShot(clip, 1f);
     }
 }
