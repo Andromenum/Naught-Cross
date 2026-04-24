@@ -29,6 +29,7 @@ public class PlayerProfilesManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         LoadProfiles();
     }
 
@@ -254,5 +255,65 @@ public class PlayerProfilesManager : MonoBehaviour
     private string NormalizeName(string rawName)
     {
         return rawName != null ? rawName.Trim() : string.Empty;
+    }
+
+    public void RecordMatchWinnerLoser(int winnerSlotIndex, int loserSlotIndex, float matchDurationSeconds)
+    {
+        EnsureSlotsInitialized();
+
+        if (!IsValidSlot(winnerSlotIndex) || !IsValidSlot(loserSlotIndex))
+            return;
+
+        if (winnerSlotIndex == loserSlotIndex)
+            return;
+
+        PlayerProfileData winner = saveData.slots[winnerSlotIndex];
+        PlayerProfileData loser = saveData.slots[loserSlotIndex];
+
+        if (winner == null || !winner.isUsed || loser == null || !loser.isUsed)
+            return;
+
+        float safeDuration = Mathf.Max(0f, matchDurationSeconds);
+
+        winner.totalGamesPlayed++;
+        winner.wins++;
+        winner.totalMatchDurationSeconds += safeDuration;
+
+        loser.totalGamesPlayed++;
+        loser.losses++;
+        loser.totalMatchDurationSeconds += safeDuration;
+
+        SaveProfiles();
+        ProfilesChanged?.Invoke();
+    }
+
+    public void RecordMatchDraw(int player1SlotIndex, int player2SlotIndex, float matchDurationSeconds)
+    {
+        EnsureSlotsInitialized();
+
+        if (!IsValidSlot(player1SlotIndex) || !IsValidSlot(player2SlotIndex))
+            return;
+
+        if (player1SlotIndex == player2SlotIndex)
+            return;
+
+        PlayerProfileData player1 = saveData.slots[player1SlotIndex];
+        PlayerProfileData player2 = saveData.slots[player2SlotIndex];
+
+        if (player1 == null || !player1.isUsed || player2 == null || !player2.isUsed)
+            return;
+
+        float safeDuration = Mathf.Max(0f, matchDurationSeconds);
+
+        player1.totalGamesPlayed++;
+        player1.draws++;
+        player1.totalMatchDurationSeconds += safeDuration;
+
+        player2.totalGamesPlayed++;
+        player2.draws++;
+        player2.totalMatchDurationSeconds += safeDuration;
+
+        SaveProfiles();
+        ProfilesChanged?.Invoke();
     }
 }

@@ -628,4 +628,73 @@ public class ProfilesPopupController : PopupControllerBase
 
         RefreshAllViews();
     }
+
+    public bool AreBothPlayersReady()
+    {
+        return player1Ready && player2Ready;
+    }
+
+    public MatchPlayerData BuildPlayer1MatchData()
+    {
+        if (PlayerProfilesManager.Instance == null)
+            return null;
+
+        if (!player1Ready || selectedPlayer1SlotIndex < 0 || selectedPlayer1XChoiceIndex < 0)
+            return null;
+
+        PlayerProfileData profile = PlayerProfilesManager.Instance.GetProfileAt(selectedPlayer1SlotIndex);
+        if (profile == null || !profile.isUsed)
+            return null;
+
+        Sprite selectedSprite = null;
+
+        if (player1XChoiceSprites != null &&
+            selectedPlayer1XChoiceIndex >= 0 &&
+            selectedPlayer1XChoiceIndex < player1XChoiceSprites.Length)
+        {
+            selectedSprite = player1XChoiceSprites[selectedPlayer1XChoiceIndex];
+        }
+
+        return new MatchPlayerData
+        {
+            profileSlotIndex = selectedPlayer1SlotIndex,
+            playerName = profile.playerName,
+            iconIndex = profile.iconIndex,
+            markVariantIndex = selectedPlayer1XChoiceIndex,
+            markType = PlayerMarkType.X,
+            selectedMarkSprite = selectedSprite
+        };
+    }
+
+    public MatchPlayerData BuildPlayer2MatchData()
+    {
+        if (PlayerProfilesManager.Instance == null)
+            return null;
+
+        if (!player2Ready || selectedPlayer2SlotIndex < 0 || selectedPlayer2OChoiceIndex < 0)
+            return null;
+
+        PlayerProfileData profile = PlayerProfilesManager.Instance.GetProfileAt(selectedPlayer2SlotIndex);
+        if (profile == null || !profile.isUsed)
+            return null;
+
+        Sprite selectedSprite = null;
+
+        if (player2OChoiceSprites != null &&
+            selectedPlayer2OChoiceIndex >= 0 &&
+            selectedPlayer2OChoiceIndex < player2OChoiceSprites.Length)
+        {
+            selectedSprite = player2OChoiceSprites[selectedPlayer2OChoiceIndex];
+        }
+
+        return new MatchPlayerData
+        {
+            profileSlotIndex = selectedPlayer2SlotIndex,
+            playerName = profile.playerName,
+            iconIndex = profile.iconIndex,
+            markVariantIndex = selectedPlayer2OChoiceIndex,
+            markType = PlayerMarkType.O,
+            selectedMarkSprite = selectedSprite
+        };
+    }
 }
