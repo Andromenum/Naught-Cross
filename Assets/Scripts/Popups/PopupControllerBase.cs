@@ -10,11 +10,8 @@ public abstract class PopupControllerBase : MonoBehaviour
 
     protected virtual void Awake()
     {
-        if (landscapePopupRoot != null)
-            landscapePopupRoot.SetActive(false);
-
-        if (portraitPopupRoot != null)
-            portraitPopupRoot.SetActive(false);
+        ForceHideRoot(landscapePopupRoot);
+        ForceHideRoot(portraitPopupRoot);
     }
 
     protected virtual void Start()
@@ -38,19 +35,29 @@ public abstract class PopupControllerBase : MonoBehaviour
 
     public virtual void OpenPopup()
     {
+        bool wasClosed = !isOpen;
         isOpen = true;
-        RefreshPopupVisibility();
+
+        RefreshPopupVisibility(animate: wasClosed);
+
+        if (wasClosed && SFXManager.Instance != null)
+            SFXManager.Instance.PlayPopupOpen();
     }
 
     public virtual void ClosePopup()
     {
+        if (!isOpen)
+            return;
+
         isOpen = false;
 
-        if (landscapePopupRoot != null)
-            landscapePopupRoot.SetActive(false);
+        bool isPortrait = UILayoutController.Instance != null && UILayoutController.Instance.IsPortrait;
 
-        if (portraitPopupRoot != null)
-            portraitPopupRoot.SetActive(false);
+        GameObject activeRoot = isPortrait ? portraitPopupRoot : landscapePopupRoot;
+        GameObject inactiveRoot = isPortrait ? landscapePopupRoot : portraitPopupRoot;
+
+        ForceHideRoot(inactiveRoot);
+        CloseRoot(activeRoot);
     }
 
     protected virtual void BeforeOpenOrRefresh()
@@ -78,21 +85,77 @@ public abstract class PopupControllerBase : MonoBehaviour
         if (!isOpen)
             return;
 
-        RefreshPopupVisibility();
+        RefreshPopupVisibility(animate: false);
     }
 
-    private void RefreshPopupVisibility()
+    private void RefreshPopupVisibility(bool animate)
     {
         BeforeOpenOrRefresh();
 
         bool isPortrait = UILayoutController.Instance != null && UILayoutController.Instance.IsPortrait;
 
-        if (landscapePopupRoot != null)
-            landscapePopupRoot.SetActive(isOpen && !isPortrait);
+        GameObject activeRoot = isPortrait ? portraitPopupRoot : landscapePopupRoot;
+        GameObject inactiveRoot = isPortrait ? landscapePopupRoot : portraitPopupRoot;
 
-        if (portraitPopupRoot != null)
-            portraitPopupRoot.SetActive(isOpen && isPortrait);
+        ForceHideRoot(inactiveRoot);
+
+        if (animate)
+            OpenRoot(activeRoot);
+        else
+            ForceShowRoot(activeRoot);
 
         AfterLayoutSwap();
+    }
+
+    private void OpenRoot(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        PopupAnimator animator = root.GetComponent<PopupAnimator>();
+
+        if (animator != null)
+            animator.PlayOpen();
+        else
+            root.SetActive(true);
+    }
+
+    private void CloseRoot(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        PopupAnimator animator = root.GetComponent<PopupAnimator>();
+
+        if (animator != null)
+            animator.PlayClose();
+        else
+            root.SetActive(false);
+    }
+
+    private void ForceShowRoot(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        PopupAnimator animator = root.GetComponent<PopupAnimator>();
+
+        if (animator != null)
+            animator.ForceShown();
+        else
+            root.SetActive(true);
+    }
+
+    private void ForceHideRoot(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        PopupAnimator animator = root.GetComponent<PopupAnimator>();
+
+        if (animator != null)
+            animator.ForceHidden();
+        else
+            root.SetActive(false);
     }
 }

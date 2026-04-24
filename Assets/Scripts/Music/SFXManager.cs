@@ -11,6 +11,7 @@ public class SFXManager : MonoBehaviour
     [Header("Default Clips")]
     [SerializeField] private AudioClip globalClickClip;
     [SerializeField] private AudioClip buttonClickClip;
+    [SerializeField] private AudioClip popupOpenClip;
 
     private AudioSource audioSource;
 
@@ -66,6 +67,11 @@ public class SFXManager : MonoBehaviour
     public void PlayButtonClick()
     {
         PlayClip(buttonClickClip);
+    }
+
+    public void PlayPopupOpen()
+    {
+        PlayClip(popupOpenClip);
     }
 
     public void PlayClip(AudioClip clip)

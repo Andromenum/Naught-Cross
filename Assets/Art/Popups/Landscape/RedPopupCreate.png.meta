@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 449ff315d4064e84db2d8fbc412abcb0
+guid: 939b56899bcaf274fbd2c64d9b13b194
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2104134632250322695
-    second: StatsPopup_0
+      213: 8581738157663575256
+    second: RedPopupCreate_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +52,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 58, y: 114, z: 60, w: 101}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -113,23 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: StatsPopup_0
+      name: RedPopupCreate_0
       rect:
         serializedVersion: 2
-        x: 56
-        y: 106
-        width: 1938
-        height: 1327
+        x: 44
+        y: 98
+        width: 1368
+        height: 886
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 70fa0e2cc43633d10800000000000000
-      internalID: 2104134632250322695
+      spriteID: 8dcd3fae265781770800000000000000
+      internalID: 8581738157663575256
       vertices: []
       indices: 
       edges: []
@@ -138,8 +138,8 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
-    internalID: 1537655665
+    spriteID: 
+    internalID: 0
     vertices: []
     indices: 
     edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      StatsPopup_0: 2104134632250322695
+      RedPopupCreate_0: 8581738157663575256
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

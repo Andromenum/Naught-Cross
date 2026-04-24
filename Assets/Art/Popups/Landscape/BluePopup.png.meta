@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 449ff315d4064e84db2d8fbc412abcb0
+guid: 7dd5ef094a83e3849b8b2bcde1a98ebb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2104134632250322695
-    second: StatsPopup_0
+      213: 1050474667813392907
+    second: BluePopup_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +52,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 58, y: 114, z: 60, w: 101}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -113,23 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: StatsPopup_0
+      name: BluePopup_0
       rect:
         serializedVersion: 2
-        x: 56
-        y: 106
-        width: 1938
-        height: 1327
+        x: 79
+        y: 166
+        width: 1295
+        height: 773
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 70fa0e2cc43633d10800000000000000
-      internalID: 2104134632250322695
+      spriteID: b02509c0529049e00800000000000000
+      internalID: 1050474667813392907
       vertices: []
       indices: 
       edges: []
@@ -138,8 +138,8 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
-    internalID: 1537655665
+    spriteID: 
+    internalID: 0
     vertices: []
     indices: 
     edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      StatsPopup_0: 2104134632250322695
+      BluePopup_0: 1050474667813392907
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
