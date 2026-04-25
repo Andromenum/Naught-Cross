@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(AudioSource))]
 public class AudioManager : MonoBehaviour
@@ -13,9 +14,13 @@ public class AudioManager : MonoBehaviour
 
     private AudioSource audioSource;
     private Coroutine fadeRoutine;
+    private bool isLoadingScene;
+
+    private float currentMusicMultiplier = 1f;
 
     public bool MusicEnabled { get; private set; }
     public float MusicVolume { get; private set; }
+    public float FadeDuration => fadeDuration;
 
     private void Awake()
     {
@@ -26,6 +31,7 @@ public class AudioManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
 
         audioSource = GetComponent<AudioSource>();
         audioSource.playOnAwake = false;
@@ -34,30 +40,78 @@ public class AudioManager : MonoBehaviour
 
         MusicEnabled = PlayerPrefs.GetInt(MusicEnabledKey, 1) == 1;
         MusicVolume = PlayerPrefs.GetFloat(MusicVolumeKey, 1f);
+
+        ApplyMusicSettingsInstant();
     }
 
-    private void Start()
+    public void PlayMusic(AudioClip clip, bool fadeIn = true)
     {
-        if (audioSource.clip == null)
+        if (clip == null)
             return;
 
-        audioSource.volume = MusicVolume;
-        audioSource.Play();
+        currentMusicMultiplier = 1f;
 
-        if (MusicEnabled)
+        if (audioSource.clip == clip && audioSource.isPlaying)
         {
-            audioSource.mute = false;
+            audioSource.mute = !MusicEnabled;
 
-            if (fadeDuration > 0f)
-            {
-                audioSource.volume = 0f;
-                StartFadeTo(MusicVolume);
-            }
+            if (MusicEnabled)
+                FadeMusicToCurrentTarget(fadeIn ? fadeDuration : 0f);
+
+            return;
         }
-        else
+
+        StopCurrentFade();
+        fadeRoutine = StartCoroutine(SwitchMusicRoutine(clip, fadeIn));
+    }
+
+    public void StopMusic(bool fadeOut = true)
+    {
+        StopCurrentFade();
+
+        if (!fadeOut)
         {
-            audioSource.mute = true;
+            audioSource.Stop();
+            audioSource.clip = null;
+            return;
         }
+
+        fadeRoutine = StartCoroutine(FadeOutAndStopRoutine(fadeDuration));
+    }
+
+    public void FadeOutMusic(float duration)
+    {
+        StopCurrentFade();
+        fadeRoutine = StartCoroutine(FadeOutAndStopRoutine(duration));
+    }
+
+    public void LoadSceneWithMusicFade(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName) || isLoadingScene)
+            return;
+
+        StopCurrentFade();
+        fadeRoutine = StartCoroutine(FadeOutAndLoadRoutine(sceneName));
+    }
+
+    public void DuckMusic(float targetMultiplier, float duration)
+    {
+        currentMusicMultiplier = Mathf.Clamp01(targetMultiplier);
+
+        if (!MusicEnabled || audioSource == null)
+            return;
+
+        FadeMusicToCurrentTarget(duration);
+    }
+
+    public void RestoreMusicVolume(float duration)
+    {
+        currentMusicMultiplier = 1f;
+
+        if (!MusicEnabled || audioSource == null)
+            return;
+
+        FadeMusicToCurrentTarget(duration);
     }
 
     public void SetMusicEnabled(bool enabled)
@@ -67,13 +121,12 @@ public class AudioManager : MonoBehaviour
         PlayerPrefs.SetInt(MusicEnabledKey, enabled ? 1 : 0);
         PlayerPrefs.Save();
 
-        if (audioSource.clip == null)
-            return;
+        audioSource.mute = !enabled;
 
-        if (!audioSource.isPlaying)
+        if (enabled && audioSource.clip != null && !audioSource.isPlaying)
             audioSource.Play();
 
-        audioSource.mute = !enabled;
+        ApplyMusicSettingsInstant();
     }
 
     public void SetMusicVolume(float volume)
@@ -83,38 +136,103 @@ public class AudioManager : MonoBehaviour
         PlayerPrefs.SetFloat(MusicVolumeKey, MusicVolume);
         PlayerPrefs.Save();
 
-        StopCurrentFade();
-        audioSource.volume = MusicVolume;
+        ApplyMusicSettingsInstant();
     }
 
-    private void StartFadeTo(float targetVolume)
+    private IEnumerator SwitchMusicRoutine(AudioClip newClip, bool fadeIn)
     {
-        StopCurrentFade();
-        fadeRoutine = StartCoroutine(FadeToRoutine(Mathf.Clamp01(targetVolume)));
+        if (audioSource.isPlaying && MusicEnabled)
+            yield return FadeToRoutine(0f, fadeDuration);
+
+        audioSource.Stop();
+        audioSource.clip = newClip;
+        audioSource.mute = !MusicEnabled;
+
+        float targetVolume = GetCurrentTargetVolume();
+
+        audioSource.volume = fadeIn && MusicEnabled ? 0f : targetVolume;
+        audioSource.Play();
+
+        if (fadeIn && MusicEnabled)
+            yield return FadeToRoutine(targetVolume, fadeDuration);
+        else
+            audioSource.volume = targetVolume;
+
+        fadeRoutine = null;
     }
 
-    private IEnumerator FadeToRoutine(float targetVolume)
+    private IEnumerator FadeOutAndStopRoutine(float duration)
     {
-        if (fadeDuration <= 0f)
+        if (audioSource.isPlaying && MusicEnabled)
+            yield return FadeToRoutine(0f, duration);
+
+        audioSource.Stop();
+        audioSource.clip = null;
+        fadeRoutine = null;
+    }
+
+    private IEnumerator FadeOutAndLoadRoutine(string sceneName)
+    {
+        isLoadingScene = true;
+
+        if (audioSource.isPlaying && MusicEnabled)
+            yield return FadeToRoutine(0f, fadeDuration);
+
+        SceneManager.LoadScene(sceneName);
+
+        isLoadingScene = false;
+        fadeRoutine = null;
+    }
+
+    private void FadeMusicToCurrentTarget(float duration)
+    {
+        StopCurrentFade();
+        fadeRoutine = StartCoroutine(FadeToCurrentTargetRoutine(duration));
+    }
+
+    private IEnumerator FadeToCurrentTargetRoutine(float duration)
+    {
+        yield return FadeToRoutine(GetCurrentTargetVolume(), duration);
+        fadeRoutine = null;
+    }
+
+    private IEnumerator FadeToRoutine(float targetVolume, float duration)
+    {
+        if (audioSource == null)
+            yield break;
+
+        if (duration <= 0f)
         {
             audioSource.volume = targetVolume;
-            fadeRoutine = null;
             yield break;
         }
 
         float startVolume = audioSource.volume;
         float elapsed = 0f;
 
-        while (elapsed < fadeDuration)
+        while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / fadeDuration);
+            float t = Mathf.Clamp01(elapsed / duration);
             audioSource.volume = Mathf.Lerp(startVolume, targetVolume, t);
             yield return null;
         }
 
         audioSource.volume = targetVolume;
-        fadeRoutine = null;
+    }
+
+    private void ApplyMusicSettingsInstant()
+    {
+        if (audioSource == null)
+            return;
+
+        audioSource.mute = !MusicEnabled;
+        audioSource.volume = GetCurrentTargetVolume();
+    }
+
+    private float GetCurrentTargetVolume()
+    {
+        return MusicVolume * currentMusicMultiplier;
     }
 
     private void StopCurrentFade()

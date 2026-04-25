@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +13,25 @@ public class TicTacToeGameplayController : MonoBehaviour
     [SerializeField] private GameplayHUDController gameplayHUDController;
     [SerializeField] private VictoryPopupController victoryPopupController;
 
+    [Header("Strike Line")]
+    [SerializeField] private StrikeLineController landscapeStrikeLine;
+    [SerializeField] private StrikeLineController portraitStrikeLine;
+
+    [Header("Start Countdown")]
+    [SerializeField] private bool useStartCountdown = true;
+    [SerializeField] private float initialDelayBeforeCountdown = 0.5f;
+    [SerializeField] private float countdownStepSeconds = 0.75f;
+    [SerializeField] private float matchTextSeconds = 0.65f;
+    [SerializeField] private string matchText = "MATCH!";
+
+    [Header("Result Music Control")]
+    [SerializeField] private bool fadeMusicOutOnResult = true;
+    [SerializeField] private float resultMusicFadeOutDuration = 0.5f;
+
+    [SerializeField] private bool restoreMusicAfterResultSfx = true;
+    [SerializeField, Range(0f, 1f)] private float resultPopupMusicVolumeMultiplier = 0.5f;
+    [SerializeField] private float resultPopupMusicFadeInDuration = 0.5f;
+
     private readonly Dictionary<Vector2Int, int> boardState = new Dictionary<Vector2Int, int>();
 
     private readonly Dictionary<Vector2Int, BoardCellUI> landscapeCellLookup = new Dictionary<Vector2Int, BoardCellUI>();
@@ -25,8 +45,16 @@ public class TicTacToeGameplayController : MonoBehaviour
 
     private bool isPlayer1Turn = true;
     private bool gameEnded;
+    private bool matchStarted;
+
     private float matchStartTime;
+
     private int moveCount;
+    private int player1TurnCount;
+    private int player2TurnCount;
+
+    private Coroutine finishRoutine;
+    private Coroutine countdownRoutine;
 
     private static readonly Vector2Int[] CheckDirections =
     {
@@ -48,6 +76,14 @@ public class TicTacToeGameplayController : MonoBehaviour
         CacheBoardCells(portraitBoardCellsRoot, portraitCellLookup, "Portrait");
 
         BeginMatch();
+    }
+
+    private void Update()
+    {
+        if (!matchStarted || gameEnded)
+            return;
+
+        UpdateElapsedTimeHUD();
     }
 
     private void OnEnable()
@@ -153,11 +189,30 @@ public class TicTacToeGameplayController : MonoBehaviour
         boardState.Clear();
 
         ClearAllBoardViews();
+        ClearAllStrikeLines();
+
+        SFXManager.Instance?.StopLoop();
+        AudioManager.Instance?.RestoreMusicVolume(0f);
 
         isPlayer1Turn = true;
         gameEnded = false;
+        matchStarted = false;
+
         moveCount = 0;
-        matchStartTime = Time.time;
+        player1TurnCount = 0;
+        player2TurnCount = 0;
+
+        if (finishRoutine != null)
+        {
+            StopCoroutine(finishRoutine);
+            finishRoutine = null;
+        }
+
+        if (countdownRoutine != null)
+        {
+            StopCoroutine(countdownRoutine);
+            countdownRoutine = null;
+        }
 
         if (victoryPopupController != null)
             victoryPopupController.ClosePopup();
@@ -165,6 +220,67 @@ public class TicTacToeGameplayController : MonoBehaviour
         if (gameplayHUDController != null)
         {
             gameplayHUDController.LoadFromSession();
+            gameplayHUDController.ClearTurnIndicators();
+            gameplayHUDController.SetElapsedTime(0f);
+            gameplayHUDController.SetPlayerTurnCounters(0, 0);
+            gameplayHUDController.HideCountdown();
+        }
+
+        RefreshAllBoardViews();
+
+        if (useStartCountdown)
+            countdownRoutine = StartCoroutine(StartCountdownRoutine());
+        else
+            StartMatchAfterCountdown();
+    }
+
+    private IEnumerator StartCountdownRoutine()
+    {
+        if (gameplayHUDController != null)
+            gameplayHUDController.HideCountdown();
+
+        if (initialDelayBeforeCountdown > 0f)
+            yield return new WaitForSecondsRealtime(initialDelayBeforeCountdown);
+
+        yield return null;
+
+        if (gameplayHUDController != null)
+            gameplayHUDController.ShowCountdown("3");
+
+        yield return new WaitForSecondsRealtime(countdownStepSeconds);
+
+        if (gameplayHUDController != null)
+            gameplayHUDController.ShowCountdown("2");
+
+        yield return new WaitForSecondsRealtime(countdownStepSeconds);
+
+        if (gameplayHUDController != null)
+            gameplayHUDController.ShowCountdown("1");
+
+        yield return new WaitForSecondsRealtime(countdownStepSeconds);
+
+        if (gameplayHUDController != null)
+            gameplayHUDController.ShowCountdown(matchText);
+
+        yield return new WaitForSecondsRealtime(matchTextSeconds);
+
+        if (gameplayHUDController != null)
+            gameplayHUDController.HideCountdown();
+
+        StartMatchAfterCountdown();
+        countdownRoutine = null;
+    }
+
+    private void StartMatchAfterCountdown()
+    {
+        matchStarted = true;
+        gameEnded = false;
+        matchStartTime = Time.time;
+
+        if (gameplayHUDController != null)
+        {
+            gameplayHUDController.SetElapsedTime(0f);
+            gameplayHUDController.SetPlayerTurnCounters(player1TurnCount, player2TurnCount);
             gameplayHUDController.SetCurrentTurnToPlayer1();
         }
 
@@ -173,7 +289,7 @@ public class TicTacToeGameplayController : MonoBehaviour
 
     private void HandleCellClicked(Vector2Int cellPosition)
     {
-        if (gameEnded)
+        if (!matchStarted || gameEnded)
             return;
 
         if (!CellExistsInAnyBoard(cellPosition))
@@ -188,11 +304,43 @@ public class TicTacToeGameplayController : MonoBehaviour
         boardState[cellPosition] = currentPlayerValue;
         moveCount++;
 
-        ApplyMarkToAllBoardViews(cellPosition, currentMarkSprite);
+        if (isPlayer1Turn)
+            player1TurnCount++;
+        else
+            player2TurnCount++;
 
-        if (HasWinFromLastMove(cellPosition, currentPlayerValue))
+        ApplyMarkToAllBoardViews(cellPosition, currentMarkSprite);
+        UpdatePlayerTurnCountersHUD();
+
+        if (SFXManager.Instance != null)
         {
-            FinishWithWinner(isPlayer1Turn ? player1Data : player2Data, isPlayer1Turn ? player2Data : player1Data);
+            if (isPlayer1Turn)
+                SFXManager.Instance.PlayById("place_x");
+            else
+                SFXManager.Instance.PlayById("place_o");
+        }
+
+        if (TryGetWinningLineFromLastMove(cellPosition, currentPlayerValue, out Vector2Int winStart, out Vector2Int winEnd))
+        {
+            gameEnded = true;
+            matchStarted = false;
+
+            RefreshAllBoardViews();
+            UpdateElapsedTimeHUD();
+            UpdatePlayerTurnCountersHUD();
+
+            if (gameplayHUDController != null)
+                gameplayHUDController.ClearTurnIndicators();
+
+            if (finishRoutine != null)
+                StopCoroutine(finishRoutine);
+
+            finishRoutine = StartCoroutine(FinishWithWinnerSequence(
+                isPlayer1Turn ? player1Data : player2Data,
+                isPlayer1Turn ? player2Data : player1Data,
+                winStart,
+                winEnd));
+
             return;
         }
 
@@ -215,8 +363,15 @@ public class TicTacToeGameplayController : MonoBehaviour
         RefreshAllBoardViews();
     }
 
-    private bool HasWinFromLastMove(Vector2Int lastMove, int playerValue)
+    private bool TryGetWinningLineFromLastMove(
+        Vector2Int lastMove,
+        int playerValue,
+        out Vector2Int lineStart,
+        out Vector2Int lineEnd)
     {
+        lineStart = lastMove;
+        lineEnd = lastMove;
+
         if (moveCount < (requiredInRow * 2) - 1)
             return false;
 
@@ -224,38 +379,90 @@ public class TicTacToeGameplayController : MonoBehaviour
         {
             Vector2Int dir = CheckDirections[i];
 
-            int totalConnected = 1;
-            totalConnected += CountDirection(lastMove, dir, playerValue);
-            totalConnected += CountDirection(lastMove, -dir, playerValue);
+            int forwardCount = CountDirection(lastMove, dir, playerValue, out Vector2Int forwardEnd);
+            int backwardCount = CountDirection(lastMove, -dir, playerValue, out Vector2Int backwardEnd);
+
+            int totalConnected = 1 + forwardCount + backwardCount;
 
             if (totalConnected >= requiredInRow)
+            {
+                lineStart = backwardCount > 0 ? backwardEnd : lastMove;
+                lineEnd = forwardCount > 0 ? forwardEnd : lastMove;
                 return true;
+            }
         }
 
         return false;
     }
 
-    private int CountDirection(Vector2Int start, Vector2Int direction, int playerValue)
+    private int CountDirection(
+        Vector2Int start,
+        Vector2Int direction,
+        int playerValue,
+        out Vector2Int furthestPoint)
     {
         int count = 0;
+        furthestPoint = start;
+
         Vector2Int current = start + direction;
 
         while (boardState.TryGetValue(current, out int cellValue) && cellValue == playerValue)
         {
             count++;
+            furthestPoint = current;
             current += direction;
         }
 
         return count;
     }
 
-    private void FinishWithWinner(MatchPlayerData winner, MatchPlayerData loser)
+    private IEnumerator FinishWithWinnerSequence(
+        MatchPlayerData winner,
+        MatchPlayerData loser,
+        Vector2Int winStart,
+        Vector2Int winEnd)
     {
-        gameEnded = true;
-        RefreshAllBoardViews();
+        float waitTime = 0f;
 
-        if (gameplayHUDController != null)
-            gameplayHUDController.ClearTurnIndicators();
+        if (fadeMusicOutOnResult)
+            AudioManager.Instance?.DuckMusic(0f, resultMusicFadeOutDuration);
+
+        SFXManager.Instance?.PlayLoopById("strike");
+
+        if (landscapeStrikeLine != null &&
+            landscapeCellLookup.TryGetValue(winStart, out BoardCellUI landscapeStartCell) &&
+            landscapeCellLookup.TryGetValue(winEnd, out BoardCellUI landscapeEndCell))
+        {
+            StartCoroutine(landscapeStrikeLine.PlayStrikeBetween(
+                landscapeStartCell.transform as RectTransform,
+                landscapeEndCell.transform as RectTransform));
+
+            waitTime = Mathf.Max(waitTime, landscapeStrikeLine.TotalDuration);
+        }
+
+        if (portraitStrikeLine != null &&
+            portraitCellLookup.TryGetValue(winStart, out BoardCellUI portraitStartCell) &&
+            portraitCellLookup.TryGetValue(winEnd, out BoardCellUI portraitEndCell))
+        {
+            StartCoroutine(portraitStrikeLine.PlayStrikeBetween(
+                portraitStartCell.transform as RectTransform,
+                portraitEndCell.transform as RectTransform));
+
+            waitTime = Mathf.Max(waitTime, portraitStrikeLine.TotalDuration);
+        }
+
+        if (waitTime > 0f)
+            yield return new WaitForSeconds(waitTime);
+
+        SFXManager.Instance?.StopLoop();
+
+        float winSfxLength = 0f;
+
+        if (SFXManager.Instance != null)
+        {
+            winSfxLength = SFXManager.Instance.GetClipLengthById("win");
+            SFXManager.Instance.PlayById("win");
+        }
 
         float matchDuration = Mathf.Max(0f, Time.time - matchStartTime);
 
@@ -267,15 +474,54 @@ public class TicTacToeGameplayController : MonoBehaviour
 
         if (victoryPopupController != null)
             victoryPopupController.ShowWinner(winner);
+
+        if (restoreMusicAfterResultSfx)
+        {
+            if (winSfxLength > 0f)
+                yield return new WaitForSecondsRealtime(winSfxLength);
+
+            AudioManager.Instance?.DuckMusic(
+                resultPopupMusicVolumeMultiplier,
+                resultPopupMusicFadeInDuration);
+        }
+
+        finishRoutine = null;
     }
 
     private void FinishWithDraw()
     {
         gameEnded = true;
+        matchStarted = false;
+
         RefreshAllBoardViews();
+        ClearAllStrikeLines();
+
+        UpdateElapsedTimeHUD();
+        UpdatePlayerTurnCountersHUD();
 
         if (gameplayHUDController != null)
             gameplayHUDController.ClearTurnIndicators();
+
+        if (finishRoutine != null)
+            StopCoroutine(finishRoutine);
+
+        finishRoutine = StartCoroutine(FinishWithDrawSequence());
+    }
+
+    private IEnumerator FinishWithDrawSequence()
+    {
+        if (fadeMusicOutOnResult)
+            AudioManager.Instance?.DuckMusic(0f, resultMusicFadeOutDuration);
+
+        SFXManager.Instance?.StopLoop();
+
+        float drawSfxLength = 0f;
+
+        if (SFXManager.Instance != null)
+        {
+            drawSfxLength = SFXManager.Instance.GetClipLengthById("draw");
+            SFXManager.Instance.PlayById("draw");
+        }
 
         float matchDuration = Mathf.Max(0f, Time.time - matchStartTime);
 
@@ -287,6 +533,18 @@ public class TicTacToeGameplayController : MonoBehaviour
 
         if (victoryPopupController != null)
             victoryPopupController.ShowDraw();
+
+        if (restoreMusicAfterResultSfx)
+        {
+            if (drawSfxLength > 0f)
+                yield return new WaitForSecondsRealtime(drawSfxLength);
+
+            AudioManager.Instance?.DuckMusic(
+                resultPopupMusicVolumeMultiplier,
+                resultPopupMusicFadeInDuration);
+        }
+
+        finishRoutine = null;
     }
 
     private void HandleLayoutChanged(bool isPortrait)
@@ -319,8 +577,8 @@ public class TicTacToeGameplayController : MonoBehaviour
             {
                 cell.ClearMark();
 
-                bool interactable = !gameEnded;
-                cell.SetInteractable(interactable);
+                bool canInteract = matchStarted && !gameEnded;
+                cell.SetInteractable(canInteract);
             }
         }
     }
@@ -349,6 +607,15 @@ public class TicTacToeGameplayController : MonoBehaviour
             portraitCell.SetMark(markSprite);
     }
 
+    private void ClearAllStrikeLines()
+    {
+        if (landscapeStrikeLine != null)
+            landscapeStrikeLine.ClearStrike();
+
+        if (portraitStrikeLine != null)
+            portraitStrikeLine.ClearStrike();
+    }
+
     private bool CellExistsInAnyBoard(Vector2Int pos)
     {
         return landscapeCellLookup.ContainsKey(pos) || portraitCellLookup.ContainsKey(pos);
@@ -357,5 +624,24 @@ public class TicTacToeGameplayController : MonoBehaviour
     private int GetBoardCellCount()
     {
         return landscapeCellLookup.Count > 0 ? landscapeCellLookup.Count : portraitCellLookup.Count;
+    }
+
+    private void UpdateElapsedTimeHUD()
+    {
+        if (gameplayHUDController == null)
+            return;
+
+        float elapsed = Mathf.Max(0f, Time.time - matchStartTime);
+        gameplayHUDController.SetElapsedTime(elapsed);
+    }
+
+    private void UpdatePlayerTurnCountersHUD()
+    {
+        if (gameplayHUDController == null)
+            return;
+
+        gameplayHUDController.SetPlayerTurnCounters(
+            player1TurnCount,
+            player2TurnCount);
     }
 }
