@@ -18,6 +18,7 @@ public class SFXManager : MonoBehaviour
 
     private const string SfxEnabledKey = "SfxEnabled";
     private const string SfxVolumeKey = "SfxVolume";
+    private const float DefaultSfxVolume = 0.4f;
 
     [Header("Named Clips")]
     [SerializeField] private NamedSFXClip[] namedClips;
@@ -52,7 +53,9 @@ public class SFXManager : MonoBehaviour
         ConfigureSource(loopSource, true);
 
         SfxEnabled = PlayerPrefs.GetInt(SfxEnabledKey, 1) == 1;
-        SfxVolume = PlayerPrefs.GetFloat(SfxVolumeKey, 1f);
+        SfxVolume = PlayerPrefs.HasKey(SfxVolumeKey)
+            ? PlayerPrefs.GetFloat(SfxVolumeKey)
+            : DefaultSfxVolume;
 
         BuildLookup();
         ApplySfxSettings();

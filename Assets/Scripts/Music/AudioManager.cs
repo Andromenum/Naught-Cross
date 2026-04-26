@@ -9,6 +9,7 @@ public class AudioManager : MonoBehaviour
 
     private const string MusicEnabledKey = "MusicEnabled";
     private const string MusicVolumeKey = "MusicVolume";
+    private const float DefaultMusicVolume = 0.2f;
 
     [SerializeField] private float fadeDuration = 1.5f;
 
@@ -42,7 +43,9 @@ public class AudioManager : MonoBehaviour
         audioSource.spatialBlend = 0f;
 
         MusicEnabled = PlayerPrefs.GetInt(MusicEnabledKey, 1) == 1;
-        MusicVolume = PlayerPrefs.GetFloat(MusicVolumeKey, 1f);
+        MusicVolume = PlayerPrefs.HasKey(MusicVolumeKey)
+            ? PlayerPrefs.GetFloat(MusicVolumeKey)
+            : DefaultMusicVolume;
 
         ApplyMusicSettingsInstant();
     }
