@@ -40,6 +40,10 @@ public class GameplayHUDController : MonoBehaviour
     [SerializeField] private Color activeIconColor = Color.white;
     [SerializeField] private Color inactiveIconColor = new Color(0.35f, 0.35f, 0.35f, 1f);
 
+    [Header("Gameplay Menu Buttons")]
+    [SerializeField] private Button landscapeMenuButton;
+    [SerializeField] private Button portraitMenuButton;
+
     private string player1Name;
     private string player2Name;
     private Sprite player1Icon;
@@ -295,5 +299,14 @@ public class GameplayHUDController : MonoBehaviour
         int remainingSeconds = totalSeconds % 60;
 
         return minutes.ToString("00") + ":" + remainingSeconds.ToString("00");
+    }
+
+    public void SetGameplayMenuButtonInteractable(bool interactable)
+    {
+        if (landscapeMenuButton != null)
+            landscapeMenuButton.interactable = interactable;
+
+        if (portraitMenuButton != null)
+            portraitMenuButton.interactable = interactable;
     }
 }

@@ -19,19 +19,6 @@ public class SFXManager : MonoBehaviour
     private const string SfxEnabledKey = "SfxEnabled";
     private const string SfxVolumeKey = "SfxVolume";
 
-    [Header("Default Clips")]
-    [SerializeField] private AudioClip globalClickClip;
-    [Range(0f, 1f)]
-    [SerializeField] private float globalClickVolume = 1f;
-
-    [SerializeField] private AudioClip buttonClickClip;
-    [Range(0f, 1f)]
-    [SerializeField] private float buttonClickVolume = 1f;
-
-    [SerializeField] private AudioClip popupOpenClip;
-    [Range(0f, 1f)]
-    [SerializeField] private float popupOpenVolume = 1f;
-
     [Header("Named Clips")]
     [SerializeField] private NamedSFXClip[] namedClips;
 
@@ -137,17 +124,17 @@ public class SFXManager : MonoBehaviour
 
     public void PlayGlobalClick()
     {
-        PlayClip(globalClickClip, globalClickVolume);
+        PlayById("global_click");
     }
 
     public void PlayButtonClick()
     {
-        PlayClip(buttonClickClip, buttonClickVolume);
+        PlayById("button_click");
     }
 
     public void PlayPopupOpen()
     {
-        PlayClip(popupOpenClip, popupOpenVolume);
+        PlayById("popup_open");
     }
 
     public void PlayById(string id, float volumeScale = 1f)
@@ -214,6 +201,20 @@ public class SFXManager : MonoBehaviour
         activeLoopVolumeScale = 1f;
     }
 
+    public float GetClipLengthById(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return 0f;
+
+        if (!clipLookup.TryGetValue(id, out NamedSFXClip entry))
+            return 0f;
+
+        if (entry == null || entry.clip == null)
+            return 0f;
+
+        return entry.clip.length;
+    }
+
     private void ConfigureSource(AudioSource source, bool loop)
     {
         source.playOnAwake = false;
@@ -234,19 +235,5 @@ public class SFXManager : MonoBehaviour
             loopSource.mute = !SfxEnabled;
             loopSource.volume = SfxVolume * activeLoopVolumeScale;
         }
-    }
-
-    public float GetClipLengthById(string id)
-    {
-        if (string.IsNullOrWhiteSpace(id))
-            return 0f;
-
-        if (!clipLookup.TryGetValue(id, out NamedSFXClip entry))
-            return 0f;
-
-        if (entry == null || entry.clip == null)
-            return 0f;
-
-        return entry.clip.length;
     }
 }

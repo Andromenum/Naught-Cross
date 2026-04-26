@@ -22,6 +22,9 @@ public class AudioManager : MonoBehaviour
     public float MusicVolume { get; private set; }
     public float FadeDuration => fadeDuration;
 
+    private bool musicPausedByPauseMenu;
+    private bool wasMusicPlayingBeforePause;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -242,5 +245,33 @@ public class AudioManager : MonoBehaviour
 
         StopCoroutine(fadeRoutine);
         fadeRoutine = null;
+    }
+
+    public void PauseMusicForGameplayPause()
+    {
+        if (audioSource == null)
+            return;
+
+        musicPausedByPauseMenu = true;
+        wasMusicPlayingBeforePause = audioSource.isPlaying;
+
+        if (audioSource.isPlaying)
+            audioSource.Pause();
+    }
+
+    public void ResumeMusicFromGameplayPause()
+    {
+        if (audioSource == null)
+            return;
+
+        if (!musicPausedByPauseMenu)
+            return;
+
+        musicPausedByPauseMenu = false;
+
+        if (wasMusicPlayingBeforePause && MusicEnabled && audioSource.clip != null)
+            audioSource.UnPause();
+
+        wasMusicPlayingBeforePause = false;
     }
 }

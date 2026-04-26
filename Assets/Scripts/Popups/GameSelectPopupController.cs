@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class GameSelectPopupController : PopupControllerBase
 {
+    [Header("Scene Names")]
     [SerializeField] private string gameplaySceneName = "Gameplay";
+    [SerializeField] private string hardModeSceneName = "HardModeScene";
 
     private ProfilesPopupController profilesPopupController;
 
@@ -13,6 +15,16 @@ public class GameSelectPopupController : PopupControllerBase
     }
 
     public void OnStartGamePressed()
+    {
+        StartGameWithScene(gameplaySceneName);
+    }
+
+    public void OnStartHardModePressed()
+    {
+        StartGameWithScene(hardModeSceneName);
+    }
+
+    private void StartGameWithScene(string sceneName)
     {
         if (profilesPopupController == null)
         {
@@ -32,6 +44,12 @@ public class GameSelectPopupController : PopupControllerBase
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(sceneName))
+        {
+            Debug.LogWarning("Cannot start game. Scene name is empty.");
+            return;
+        }
+
         MatchPlayerData player1 = profilesPopupController.BuildPlayer1MatchData();
         MatchPlayerData player2 = profilesPopupController.BuildPlayer2MatchData();
 
@@ -42,6 +60,6 @@ public class GameSelectPopupController : PopupControllerBase
         }
 
         GameSessionManager.Instance.SetMatchSetup(player1, player2);
-        GameSessionManager.Instance.LoadGameplayScene(gameplaySceneName);
+        GameSessionManager.Instance.LoadGameplayScene(sceneName);
     }
 }

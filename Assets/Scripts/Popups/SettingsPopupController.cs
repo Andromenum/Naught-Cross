@@ -21,9 +21,19 @@ public class SettingsPopupController : PopupControllerBase
 
     protected override void Awake()
     {
-        landscapePopupRoot = landscapeView.root;
-        portraitPopupRoot = portraitView.root;
+        if (landscapeView != null)
+            landscapePopupRoot = landscapeView.root;
+
+        if (portraitView != null)
+            portraitPopupRoot = portraitView.root;
+
         base.Awake();
+    }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        RefreshAllViews();
     }
 
     protected override void BeforeOpenOrRefresh()

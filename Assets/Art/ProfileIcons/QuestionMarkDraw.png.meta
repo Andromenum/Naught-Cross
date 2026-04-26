@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 7318da18850085e4db0cace81cc343ae
+guid: 3bf4bee23676d404a83cfcb56039c003
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6470460504253458178
-    second: 3_0
+      213: 8808213272731351792
+    second: QuestionMarkDraw_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: 3_0
+      name: QuestionMarkDraw_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 180
-        height: 180
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ef817ce047e4436a0800000000000000
-      internalID: -6470460504253458178
+      spriteID: 0fa780bbd4f0d3a70800000000000000
+      internalID: 8808213272731351792
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      3_0: -6470460504253458178
+      QuestionMarkDraw_0: 8808213272731351792
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

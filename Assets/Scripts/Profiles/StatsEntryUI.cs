@@ -7,7 +7,7 @@ public class StatsEntryUI : MonoBehaviour
     private Image iconImage;
     private TMP_Text nameText;
     private TMP_Text winsText;
-    private TMP_Text lossesText;
+    private TMP_Text totalMatchesText;
     private TMP_Text drawsText;
     private TMP_Text avgMatchTimeText;
 
@@ -34,14 +34,28 @@ public class StatsEntryUI : MonoBehaviour
         if (winsText != null)
             winsText.text = profile.wins.ToString();
 
-        if (lossesText != null)
-            lossesText.text = profile.losses.ToString();
+        if (totalMatchesText != null)
+            totalMatchesText.text = GetTotalMatches(profile).ToString();
 
         if (drawsText != null)
             drawsText.text = profile.draws.ToString();
 
         if (avgMatchTimeText != null)
-            avgMatchTimeText.text = profile.GetAverageMatchDuration().ToString("0.##");
+            avgMatchTimeText.text = FormatTime(profile.GetAverageMatchDuration());
+    }
+
+    private int GetTotalMatches(PlayerProfileData profile)
+    {
+        return profile.wins + profile.losses + profile.draws;
+    }
+
+    private string FormatTime(float seconds)
+    {
+        int totalSeconds = Mathf.Max(0, Mathf.FloorToInt(seconds));
+        int minutes = totalSeconds / 60;
+        int remainingSeconds = totalSeconds % 60;
+
+        return minutes.ToString("00") + ":" + remainingSeconds.ToString("00");
     }
 
     private void EnsureReferences()
@@ -59,7 +73,7 @@ public class StatsEntryUI : MonoBehaviour
             winsText = transform.GetChild(2).GetComponent<TMP_Text>();
 
         if (transform.childCount > 3)
-            lossesText = transform.GetChild(3).GetComponent<TMP_Text>();
+            totalMatchesText = transform.GetChild(3).GetComponent<TMP_Text>();
 
         if (transform.childCount > 4)
             drawsText = transform.GetChild(4).GetComponent<TMP_Text>();

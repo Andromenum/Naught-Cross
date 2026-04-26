@@ -46,6 +46,7 @@ public class TicTacToeGameplayController : MonoBehaviour
     private bool isPlayer1Turn = true;
     private bool gameEnded;
     private bool matchStarted;
+    private bool isGameplayPaused;
 
     private float matchStartTime;
 
@@ -80,7 +81,7 @@ public class TicTacToeGameplayController : MonoBehaviour
 
     private void Update()
     {
-        if (!matchStarted || gameEnded)
+        if (!matchStarted || gameEnded || isGameplayPaused)
             return;
 
         UpdateElapsedTimeHUD();
@@ -188,19 +189,20 @@ public class TicTacToeGameplayController : MonoBehaviour
     {
         boardState.Clear();
 
+        isPlayer1Turn = true;
+        gameEnded = false;
+        matchStarted = false;
+        isGameplayPaused = false;
+
+        moveCount = 0;
+        player1TurnCount = 0;
+        player2TurnCount = 0;
+
         ClearAllBoardViews();
         ClearAllStrikeLines();
 
         SFXManager.Instance?.StopLoop();
         AudioManager.Instance?.RestoreMusicVolume(0f);
-
-        isPlayer1Turn = true;
-        gameEnded = false;
-        matchStarted = false;
-
-        moveCount = 0;
-        player1TurnCount = 0;
-        player2TurnCount = 0;
 
         if (finishRoutine != null)
         {
@@ -224,9 +226,11 @@ public class TicTacToeGameplayController : MonoBehaviour
             gameplayHUDController.SetElapsedTime(0f);
             gameplayHUDController.SetPlayerTurnCounters(0, 0);
             gameplayHUDController.HideCountdown();
+            gameplayHUDController.SetGameplayMenuButtonInteractable(false);
         }
 
         RefreshAllBoardViews();
+        UpdateGameplayMenuButtonState();
 
         if (useStartCountdown)
             countdownRoutine = StartCoroutine(StartCountdownRoutine());
@@ -238,6 +242,8 @@ public class TicTacToeGameplayController : MonoBehaviour
     {
         if (gameplayHUDController != null)
             gameplayHUDController.HideCountdown();
+
+        UpdateGameplayMenuButtonState();
 
         if (initialDelayBeforeCountdown > 0f)
             yield return new WaitForSecondsRealtime(initialDelayBeforeCountdown);
@@ -275,6 +281,7 @@ public class TicTacToeGameplayController : MonoBehaviour
     {
         matchStarted = true;
         gameEnded = false;
+        isGameplayPaused = false;
         matchStartTime = Time.time;
 
         if (gameplayHUDController != null)
@@ -285,11 +292,12 @@ public class TicTacToeGameplayController : MonoBehaviour
         }
 
         RefreshAllBoardViews();
+        UpdateGameplayMenuButtonState();
     }
 
     private void HandleCellClicked(Vector2Int cellPosition)
     {
-        if (!matchStarted || gameEnded)
+        if (!matchStarted || gameEnded || isGameplayPaused)
             return;
 
         if (!CellExistsInAnyBoard(cellPosition))
@@ -324,10 +332,12 @@ public class TicTacToeGameplayController : MonoBehaviour
         {
             gameEnded = true;
             matchStarted = false;
+            isGameplayPaused = false;
 
             RefreshAllBoardViews();
             UpdateElapsedTimeHUD();
             UpdatePlayerTurnCountersHUD();
+            UpdateGameplayMenuButtonState();
 
             if (gameplayHUDController != null)
                 gameplayHUDController.ClearTurnIndicators();
@@ -361,6 +371,7 @@ public class TicTacToeGameplayController : MonoBehaviour
         }
 
         RefreshAllBoardViews();
+        UpdateGameplayMenuButtonState();
     }
 
     private bool TryGetWinningLineFromLastMove(
@@ -473,7 +484,7 @@ public class TicTacToeGameplayController : MonoBehaviour
                 matchDuration);
 
         if (victoryPopupController != null)
-            victoryPopupController.ShowWinner(winner);
+            victoryPopupController.ShowWinner(winner, matchDuration);
 
         if (restoreMusicAfterResultSfx)
         {
@@ -492,12 +503,14 @@ public class TicTacToeGameplayController : MonoBehaviour
     {
         gameEnded = true;
         matchStarted = false;
+        isGameplayPaused = false;
 
         RefreshAllBoardViews();
         ClearAllStrikeLines();
 
         UpdateElapsedTimeHUD();
         UpdatePlayerTurnCountersHUD();
+        UpdateGameplayMenuButtonState();
 
         if (gameplayHUDController != null)
             gameplayHUDController.ClearTurnIndicators();
@@ -532,7 +545,7 @@ public class TicTacToeGameplayController : MonoBehaviour
                 matchDuration);
 
         if (victoryPopupController != null)
-            victoryPopupController.ShowDraw();
+            victoryPopupController.ShowDraw(matchDuration);
 
         if (restoreMusicAfterResultSfx)
         {
@@ -550,6 +563,7 @@ public class TicTacToeGameplayController : MonoBehaviour
     private void HandleLayoutChanged(bool isPortrait)
     {
         RefreshAllBoardViews();
+        UpdateGameplayMenuButtonState();
     }
 
     private void RefreshAllBoardViews()
@@ -577,7 +591,7 @@ public class TicTacToeGameplayController : MonoBehaviour
             {
                 cell.ClearMark();
 
-                bool canInteract = matchStarted && !gameEnded;
+                bool canInteract = matchStarted && !gameEnded && !isGameplayPaused;
                 cell.SetInteractable(canInteract);
             }
         }
@@ -643,5 +657,30 @@ public class TicTacToeGameplayController : MonoBehaviour
         gameplayHUDController.SetPlayerTurnCounters(
             player1TurnCount,
             player2TurnCount);
+    }
+
+    public void SetGameplayPaused(bool paused)
+    {
+        if (gameEnded)
+            paused = false;
+
+        isGameplayPaused = paused;
+
+        RefreshAllBoardViews();
+        UpdateGameplayMenuButtonState();
+    }
+
+    public bool CanPauseGameplay()
+    {
+        return matchStarted && !gameEnded && !isGameplayPaused;
+    }
+
+    private void UpdateGameplayMenuButtonState()
+    {
+        if (gameplayHUDController == null)
+            return;
+
+        bool canUseMenuButton = matchStarted && !gameEnded && !isGameplayPaused;
+        gameplayHUDController.SetGameplayMenuButtonInteractable(canUseMenuButton);
     }
 }
