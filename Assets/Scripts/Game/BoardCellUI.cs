@@ -75,6 +75,12 @@ public class BoardCellUI : MonoBehaviour
         ForceHiddenMark();
     }
 
+    private void OnEnable()
+    {
+        if (hasMark && currentSprite != null)
+            RestoreExistingMarkVisual();
+    }
+
     private void OnValidate()
     {
         randomScaleAmount = Mathf.Max(0f, randomScaleAmount);
@@ -118,6 +124,8 @@ public class BoardCellUI : MonoBehaviour
         {
             RestoreImageSettings();
             markImage.sprite = null;
+            markImage.enabled = true;
+            markImage.gameObject.SetActive(true);
             SetImageAlpha(0f);
         }
 
@@ -136,10 +144,14 @@ public class BoardCellUI : MonoBehaviour
             return;
         }
 
-        // Important: board refreshes call SetMark again.
-        // Do not re-randomize or restart the reveal if this mark is already placed.
+        /*
+         * Board refreshes call SetMark again when changing layout/aspect ratio.
+         * If the same mark is already stored, do not re-randomize or replay reveal,
+         * but DO force the visual to be visible again.
+         */
         if (hasMark && currentSprite == sprite)
         {
+            RestoreExistingMarkVisual();
             SetInteractable(false);
             return;
         }
@@ -156,7 +168,11 @@ public class BoardCellUI : MonoBehaviour
         GeneratePlacementVariation();
 
         if (markImage != null)
+        {
+            markImage.gameObject.SetActive(true);
+            markImage.enabled = true;
             markImage.sprite = sprite;
+        }
 
         bool canAnimate =
             useRevealAnimation &&
@@ -208,7 +224,6 @@ public class BoardCellUI : MonoBehaviour
 
             float noisyProgress = Mathf.Clamp01(curved + noise * unevenProgressStrength);
 
-            // Prevent the reveal from visually going backwards.
             shownProgress = Mathf.Max(shownProgress, noisyProgress);
 
             markImage.fillAmount = shownProgress;
@@ -269,6 +284,9 @@ public class BoardCellUI : MonoBehaviour
         if (markImage == null)
             return;
 
+        markImage.gameObject.SetActive(true);
+        markImage.enabled = true;
+
         ApplyPlacedBaseTransform();
 
         markImage.type = Image.Type.Filled;
@@ -316,7 +334,34 @@ public class BoardCellUI : MonoBehaviour
     {
         if (markImage != null)
         {
+            markImage.gameObject.SetActive(true);
+            markImage.enabled = true;
             RestoreImageSettings();
+            markImage.fillAmount = 1f;
+            SetImageAlpha(1f);
+        }
+
+        ApplyPlacedBaseTransform();
+    }
+
+    private void RestoreExistingMarkVisual()
+    {
+        EnsureReferences();
+        CacheMarkDefaults();
+
+        if (revealRoutine != null)
+        {
+            StopCoroutine(revealRoutine);
+            revealRoutine = null;
+        }
+
+        if (markImage != null)
+        {
+            markImage.gameObject.SetActive(true);
+            markImage.enabled = true;
+            markImage.sprite = currentSprite;
+            RestoreImageSettings();
+            markImage.fillAmount = 1f;
             SetImageAlpha(1f);
         }
 
@@ -327,6 +372,9 @@ public class BoardCellUI : MonoBehaviour
     {
         if (markImage == null)
             return;
+
+        markImage.gameObject.SetActive(true);
+        markImage.enabled = true;
 
         RestoreImageSettings();
         SetImageAlpha(0f);

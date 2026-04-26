@@ -5,24 +5,37 @@ using UnityEngine.UI;
 [System.Serializable]
 public class PlayerHUDRefs
 {
-    public Image iconImage;
-    public TMP_Text nameText;
-    public GameObject turnIndicatorRoot;
-    public TMP_Text turnCounterText;
+    [SerializeField] private Image iconImage;
+    [SerializeField] private TMP_Text nameText;
+    [SerializeField] private GameObject turnIndicatorRoot;
+    [SerializeField] private TMP_Text turnCounterText;
+    [SerializeField] private TMP_Text hardModeTimerText;
+
+    public Image IconImage => iconImage;
+    public TMP_Text NameText => nameText;
+    public GameObject TurnIndicatorRoot => turnIndicatorRoot;
+    public TMP_Text TurnCounterText => turnCounterText;
+    public TMP_Text HardModeTimerText => hardModeTimerText;
 }
 
 [System.Serializable]
 public class GameplayHUDView
 {
-    public GameObject root;
+    [SerializeField] private GameObject root;
 
     [Header("Players")]
-    public PlayerHUDRefs player1;
-    public PlayerHUDRefs player2;
+    [SerializeField] private PlayerHUDRefs player1;
+    [SerializeField] private PlayerHUDRefs player2;
 
     [Header("Match Info")]
-    public TMP_Text elapsedTimeText;
-    public TMP_Text countdownText;
+    [SerializeField] private TMP_Text elapsedTimeText;
+    [SerializeField] private TMP_Text countdownText;
+
+    public GameObject Root => root;
+    public PlayerHUDRefs Player1 => player1;
+    public PlayerHUDRefs Player2 => player2;
+    public TMP_Text ElapsedTimeText => elapsedTimeText;
+    public TMP_Text CountdownText => countdownText;
 }
 
 public class GameplayHUDController : MonoBehaviour
@@ -36,13 +49,13 @@ public class GameplayHUDController : MonoBehaviour
     [Header("Portrait View")]
     [SerializeField] private GameplayHUDView portraitView;
 
-    [Header("Icon States")]
-    [SerializeField] private Color activeIconColor = Color.white;
-    [SerializeField] private Color inactiveIconColor = new Color(0.35f, 0.35f, 0.35f, 1f);
-
     [Header("Gameplay Menu Buttons")]
     [SerializeField] private Button landscapeMenuButton;
     [SerializeField] private Button portraitMenuButton;
+
+    [Header("Icon States")]
+    [SerializeField] private Color activeIconColor = Color.white;
+    [SerializeField] private Color inactiveIconColor = new Color(0.35f, 0.35f, 0.35f, 1f);
 
     private string player1Name;
     private string player2Name;
@@ -54,11 +67,11 @@ public class GameplayHUDController : MonoBehaviour
 
     private void Awake()
     {
-        if (landscapeView != null && landscapeView.root != null)
-            landscapeView.root.SetActive(false);
+        if (landscapeView != null && landscapeView.Root != null)
+            landscapeView.Root.SetActive(false);
 
-        if (portraitView != null && portraitView.root != null)
-            portraitView.root.SetActive(false);
+        if (portraitView != null && portraitView.Root != null)
+            portraitView.Root.SetActive(false);
     }
 
     private void OnEnable()
@@ -79,6 +92,7 @@ public class GameplayHUDController : MonoBehaviour
         RefreshAllViews();
         RefreshTurnIndicators();
         HideCountdown();
+        SetHardModePlayerTimersVisible(false);
     }
 
     public void LoadFromSession()
@@ -111,6 +125,21 @@ public class GameplayHUDController : MonoBehaviour
         RefreshTurnIndicators();
     }
 
+    public void SetupHUD(string newPlayer1Name, Sprite newPlayer1Icon, string newPlayer2Name, Sprite newPlayer2Icon)
+    {
+        player1Name = newPlayer1Name;
+        player1Icon = newPlayer1Icon;
+
+        player2Name = newPlayer2Name;
+        player2Icon = newPlayer2Icon;
+
+        hasData = true;
+
+        RefreshLayoutVisibility();
+        RefreshAllViews();
+        RefreshTurnIndicators();
+    }
+
     public void SetCurrentTurnToPlayer1()
     {
         currentTurnPlayer = 1;
@@ -120,6 +149,12 @@ public class GameplayHUDController : MonoBehaviour
     public void SetCurrentTurnToPlayer2()
     {
         currentTurnPlayer = 2;
+        RefreshTurnIndicators();
+    }
+
+    public void SetCurrentTurn(int playerIndex)
+    {
+        currentTurnPlayer = playerIndex;
         RefreshTurnIndicators();
     }
 
@@ -136,11 +171,41 @@ public class GameplayHUDController : MonoBehaviour
         string p1Value = "TURNS " + player1Turns;
         string p2Value = "TURNS " + player2Turns;
 
-        SetPlayerTurnCounter(landscapeView != null ? landscapeView.player1 : null, p1Value);
-        SetPlayerTurnCounter(landscapeView != null ? landscapeView.player2 : null, p2Value);
+        SetPlayerTurnCounter(landscapeView != null ? landscapeView.Player1 : null, p1Value);
+        SetPlayerTurnCounter(landscapeView != null ? landscapeView.Player2 : null, p2Value);
 
-        SetPlayerTurnCounter(portraitView != null ? portraitView.player1 : null, p1Value);
-        SetPlayerTurnCounter(portraitView != null ? portraitView.player2 : null, p2Value);
+        SetPlayerTurnCounter(portraitView != null ? portraitView.Player1 : null, p1Value);
+        SetPlayerTurnCounter(portraitView != null ? portraitView.Player2 : null, p2Value);
+    }
+
+    public void SetHardModePlayerTimersVisible(bool visible)
+    {
+        SetHardModePlayerTimerVisible(landscapeView != null ? landscapeView.Player1 : null, visible);
+        SetHardModePlayerTimerVisible(landscapeView != null ? landscapeView.Player2 : null, visible);
+
+        SetHardModePlayerTimerVisible(portraitView != null ? portraitView.Player1 : null, visible);
+        SetHardModePlayerTimerVisible(portraitView != null ? portraitView.Player2 : null, visible);
+    }
+
+    public void SetHardModePlayerTimers(float player1Seconds, float player2Seconds)
+    {
+        string p1Value = "TIME " + Mathf.Max(0f, player1Seconds).ToString("0.0") + "s";
+        string p2Value = "TIME " + Mathf.Max(0f, player2Seconds).ToString("0.0") + "s";
+
+        SetHardModePlayerTimer(landscapeView != null ? landscapeView.Player1 : null, p1Value);
+        SetHardModePlayerTimer(landscapeView != null ? landscapeView.Player2 : null, p2Value);
+
+        SetHardModePlayerTimer(portraitView != null ? portraitView.Player1 : null, p1Value);
+        SetHardModePlayerTimer(portraitView != null ? portraitView.Player2 : null, p2Value);
+    }
+    public void SetHardModeTurnTimerVisible(bool visible)
+    {
+        SetHardModePlayerTimersVisible(visible);
+    }
+
+    public void SetHardModeTurnTimer(float seconds)
+    {
+        SetHardModePlayerTimers(seconds, seconds);
     }
 
     public void ShowCountdown(string value)
@@ -155,19 +220,28 @@ public class GameplayHUDController : MonoBehaviour
         SetCountdownForView(portraitView, string.Empty, false);
     }
 
+    public void SetGameplayMenuButtonInteractable(bool interactable)
+    {
+        if (landscapeMenuButton != null)
+            landscapeMenuButton.interactable = interactable;
+
+        if (portraitMenuButton != null)
+            portraitMenuButton.interactable = interactable;
+    }
+
     public void ClearTurnIndicators()
     {
-        SetIndicatorState(landscapeView != null ? landscapeView.player1 : null, false);
-        SetIndicatorState(landscapeView != null ? landscapeView.player2 : null, false);
+        SetIndicatorState(landscapeView != null ? landscapeView.Player1 : null, false);
+        SetIndicatorState(landscapeView != null ? landscapeView.Player2 : null, false);
 
-        SetIndicatorState(portraitView != null ? portraitView.player1 : null, false);
-        SetIndicatorState(portraitView != null ? portraitView.player2 : null, false);
+        SetIndicatorState(portraitView != null ? portraitView.Player1 : null, false);
+        SetIndicatorState(portraitView != null ? portraitView.Player2 : null, false);
 
-        SetIconColor(landscapeView != null ? landscapeView.player1 : null, activeIconColor);
-        SetIconColor(landscapeView != null ? landscapeView.player2 : null, activeIconColor);
+        SetIconColor(landscapeView != null ? landscapeView.Player1 : null, activeIconColor);
+        SetIconColor(landscapeView != null ? landscapeView.Player2 : null, activeIconColor);
 
-        SetIconColor(portraitView != null ? portraitView.player1 : null, activeIconColor);
-        SetIconColor(portraitView != null ? portraitView.player2 : null, activeIconColor);
+        SetIconColor(portraitView != null ? portraitView.Player1 : null, activeIconColor);
+        SetIconColor(portraitView != null ? portraitView.Player2 : null, activeIconColor);
     }
 
     private void HandleLayoutChanged(bool isPortrait)
@@ -181,11 +255,11 @@ public class GameplayHUDController : MonoBehaviour
     {
         bool isPortrait = UILayoutController.Instance != null && UILayoutController.Instance.IsPortrait;
 
-        if (landscapeView != null && landscapeView.root != null)
-            landscapeView.root.SetActive(!isPortrait);
+        if (landscapeView != null && landscapeView.Root != null)
+            landscapeView.Root.SetActive(!isPortrait);
 
-        if (portraitView != null && portraitView.root != null)
-            portraitView.root.SetActive(isPortrait);
+        if (portraitView != null && portraitView.Root != null)
+            portraitView.Root.SetActive(isPortrait);
     }
 
     private void RefreshAllViews()
@@ -202,8 +276,8 @@ public class GameplayHUDController : MonoBehaviour
         if (!hasData)
             return;
 
-        ApplyPlayerView(view.player1, player1Name, player1Icon);
-        ApplyPlayerView(view.player2, player2Name, player2Icon);
+        ApplyPlayerView(view.Player1, player1Name, player1Icon);
+        ApplyPlayerView(view.Player2, player2Name, player2Icon);
     }
 
     private void ApplyPlayerView(PlayerHUDRefs playerView, string playerNameValue, Sprite playerIconValue)
@@ -211,11 +285,11 @@ public class GameplayHUDController : MonoBehaviour
         if (playerView == null)
             return;
 
-        if (playerView.nameText != null)
-            playerView.nameText.text = playerNameValue;
+        if (playerView.NameText != null)
+            playerView.NameText.text = playerNameValue;
 
-        if (playerView.iconImage != null)
-            playerView.iconImage.sprite = playerIconValue;
+        if (playerView.IconImage != null)
+            playerView.IconImage.sprite = playerIconValue;
     }
 
     private void RefreshTurnIndicators()
@@ -232,22 +306,22 @@ public class GameplayHUDController : MonoBehaviour
         bool player1Active = currentTurnPlayer == 1;
         bool player2Active = currentTurnPlayer == 2;
 
-        SetIndicatorState(view.player1, player1Active);
-        SetIndicatorState(view.player2, player2Active);
+        SetIndicatorState(view.Player1, player1Active);
+        SetIndicatorState(view.Player2, player2Active);
 
-        SetIconColor(view.player1, player1Active ? activeIconColor : inactiveIconColor);
-        SetIconColor(view.player2, player2Active ? activeIconColor : inactiveIconColor);
+        SetIconColor(view.Player1, player1Active ? activeIconColor : inactiveIconColor);
+        SetIconColor(view.Player2, player2Active ? activeIconColor : inactiveIconColor);
     }
 
     private void SetIndicatorState(PlayerHUDRefs playerView, bool isActive)
     {
-        if (playerView == null || playerView.turnIndicatorRoot == null)
+        if (playerView == null || playerView.TurnIndicatorRoot == null)
             return;
 
         if (isActive)
-            playerView.turnIndicatorRoot.SetActive(true);
+            playerView.TurnIndicatorRoot.SetActive(true);
 
-        TurnIndicatorPulse[] pulses = playerView.turnIndicatorRoot.GetComponentsInChildren<TurnIndicatorPulse>(true);
+        TurnIndicatorPulse[] pulses = playerView.TurnIndicatorRoot.GetComponentsInChildren<TurnIndicatorPulse>(true);
 
         for (int i = 0; i < pulses.Length; i++)
         {
@@ -256,40 +330,56 @@ public class GameplayHUDController : MonoBehaviour
         }
 
         if (!isActive)
-            playerView.turnIndicatorRoot.SetActive(false);
+            playerView.TurnIndicatorRoot.SetActive(false);
     }
 
     private void SetIconColor(PlayerHUDRefs playerView, Color color)
     {
-        if (playerView == null || playerView.iconImage == null)
+        if (playerView == null || playerView.IconImage == null)
             return;
 
-        playerView.iconImage.color = color;
+        playerView.IconImage.color = color;
     }
 
     private void SetElapsedTimeForView(GameplayHUDView view, string value)
     {
-        if (view == null || view.elapsedTimeText == null)
+        if (view == null || view.ElapsedTimeText == null)
             return;
 
-        view.elapsedTimeText.text = value;
+        view.ElapsedTimeText.text = value;
     }
 
     private void SetPlayerTurnCounter(PlayerHUDRefs playerView, string value)
     {
-        if (playerView == null || playerView.turnCounterText == null)
+        if (playerView == null || playerView.TurnCounterText == null)
             return;
 
-        playerView.turnCounterText.text = value;
+        playerView.TurnCounterText.text = value;
     }
 
     private void SetCountdownForView(GameplayHUDView view, string value, bool visible)
     {
-        if (view == null || view.countdownText == null)
+        if (view == null || view.CountdownText == null)
             return;
 
-        view.countdownText.text = value;
-        view.countdownText.gameObject.SetActive(visible);
+        view.CountdownText.text = value;
+        view.CountdownText.gameObject.SetActive(visible);
+    }
+
+    private void SetHardModePlayerTimerVisible(PlayerHUDRefs playerView, bool visible)
+    {
+        if (playerView == null || playerView.HardModeTimerText == null)
+            return;
+
+        playerView.HardModeTimerText.gameObject.SetActive(visible);
+    }
+
+    private void SetHardModePlayerTimer(PlayerHUDRefs playerView, string value)
+    {
+        if (playerView == null || playerView.HardModeTimerText == null)
+            return;
+
+        playerView.HardModeTimerText.text = value;
     }
 
     private string FormatTime(float seconds)
@@ -299,14 +389,5 @@ public class GameplayHUDController : MonoBehaviour
         int remainingSeconds = totalSeconds % 60;
 
         return minutes.ToString("00") + ":" + remainingSeconds.ToString("00");
-    }
-
-    public void SetGameplayMenuButtonInteractable(bool interactable)
-    {
-        if (landscapeMenuButton != null)
-            landscapeMenuButton.interactable = interactable;
-
-        if (portraitMenuButton != null)
-            portraitMenuButton.interactable = interactable;
     }
 }

@@ -4,7 +4,6 @@ public class GameSelectPopupController : PopupControllerBase
 {
     [Header("Scene Names")]
     [SerializeField] private string gameplaySceneName = "Gameplay";
-    [SerializeField] private string hardModeSceneName = "HardModeScene";
 
     private ProfilesPopupController profilesPopupController;
 
@@ -16,15 +15,15 @@ public class GameSelectPopupController : PopupControllerBase
 
     public void OnStartGamePressed()
     {
-        StartGameWithScene(gameplaySceneName);
+        StartGameWithMode(TicTacToeGameMode.Classic);
     }
 
     public void OnStartHardModePressed()
     {
-        StartGameWithScene(hardModeSceneName);
+        StartGameWithMode(TicTacToeGameMode.Hard);
     }
 
-    private void StartGameWithScene(string sceneName)
+    private void StartGameWithMode(TicTacToeGameMode gameMode)
     {
         if (profilesPopupController == null)
         {
@@ -44,9 +43,9 @@ public class GameSelectPopupController : PopupControllerBase
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(sceneName))
+        if (string.IsNullOrWhiteSpace(gameplaySceneName))
         {
-            Debug.LogWarning("Cannot start game. Scene name is empty.");
+            Debug.LogWarning("Cannot start game. Gameplay scene name is empty.");
             return;
         }
 
@@ -59,7 +58,7 @@ public class GameSelectPopupController : PopupControllerBase
             return;
         }
 
-        GameSessionManager.Instance.SetMatchSetup(player1, player2);
-        GameSessionManager.Instance.LoadGameplayScene(sceneName);
+        GameSessionManager.Instance.SetMatchSetup(player1, player2, gameMode);
+        GameSessionManager.Instance.LoadGameplayScene(gameplaySceneName);
     }
 }
