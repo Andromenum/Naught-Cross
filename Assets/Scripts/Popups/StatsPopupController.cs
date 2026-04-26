@@ -4,6 +4,7 @@ using UnityEngine;
 public class StatsPopupView
 {
     public GameObject root;
+    public GameObject headerRoot;
     public Transform contentRoot;
     public StatsEntryUI entryPrefab;
 }
@@ -63,13 +64,21 @@ public class StatsPopupController : PopupControllerBase
 
     private void RebuildAllViews()
     {
-        RebuildView(landscapeView);
-        RebuildView(portraitView);
+        bool hasAnyProfiles = HasAnyProfiles();
+
+        RebuildView(landscapeView, hasAnyProfiles);
+        RebuildView(portraitView, hasAnyProfiles);
     }
 
-    private void RebuildView(StatsPopupView view)
+    private void RebuildView(StatsPopupView view, bool hasAnyProfiles)
     {
-        if (view == null || view.contentRoot == null || view.entryPrefab == null)
+        if (view == null)
+            return;
+
+        if (view.headerRoot != null)
+            view.headerRoot.SetActive(hasAnyProfiles);
+
+        if (view.contentRoot == null || view.entryPrefab == null)
             return;
 
         ClearChildren(view.contentRoot);
@@ -94,6 +103,20 @@ public class StatsPopupController : PopupControllerBase
 
             entry.Setup(profile, icon);
         }
+    }
+
+    private bool HasAnyProfiles()
+    {
+        if (PlayerProfilesManager.Instance == null)
+            return false;
+
+        for (int i = 0; i < PlayerProfilesManager.Instance.SlotCount; i++)
+        {
+            if (PlayerProfilesManager.Instance.HasProfileAt(i))
+                return true;
+        }
+
+        return false;
     }
 
     private void ClearChildren(Transform parent)

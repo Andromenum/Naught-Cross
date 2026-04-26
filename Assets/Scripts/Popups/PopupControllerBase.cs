@@ -2,8 +2,8 @@ using UnityEngine;
 
 public abstract class PopupControllerBase : MonoBehaviour
 {
-    [SerializeField] protected GameObject landscapePopupRoot;
-    [SerializeField] protected GameObject portraitPopupRoot;
+    [HideInInspector][SerializeField] protected GameObject landscapePopupRoot;
+    [HideInInspector][SerializeField] protected GameObject portraitPopupRoot;
 
     protected bool isOpen;
     private bool isSubscribed;

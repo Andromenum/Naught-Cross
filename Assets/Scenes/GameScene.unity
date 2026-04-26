@@ -13346,7 +13346,7 @@ MonoBehaviour:
   fadeInDuration: 0.35
   fadeOutDuration: 0.5
   useUnscaledTime: 1
-  blackoutChance: 0.4
+  blackoutChance: 0.2
   preventBackToBackBlackouts: 1
   holeRadiusMultiplier: 0.968
   holeSoftnessMultiplier: 0.359
