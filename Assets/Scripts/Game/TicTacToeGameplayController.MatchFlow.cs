@@ -61,8 +61,19 @@ public partial class TicTacToeGameplayController
             gameplayHUDController.SetPlayerTurnCounters(0, 0);
             gameplayHUDController.HideCountdown();
             gameplayHUDController.SetGameplayMenuButtonInteractable(false);
-            gameplayHUDController.SetHardModePlayerTimersVisible(false);
-            gameplayHUDController.SetHardModePlayerTimers(player1HardModeTurnLimit, player2HardModeTurnLimit);
+
+            bool showHardModeTimersDuringCountdown = ShouldUseHardModeTurnTimer();
+
+            gameplayHUDController.SetHardModePlayerTimers(
+                player1HardModeTurnLimit,
+                player2HardModeTurnLimit);
+
+            gameplayHUDController.SetHardModePlayerTimersVisible(showHardModeTimersDuringCountdown);
+
+            if (showHardModeTimersDuringCountdown)
+                gameplayHUDController.PlayHardModeTimerIntro();
+            else
+                gameplayHUDController.StopHardModeTimerIntro();
         }
 
         RefreshAllBoardViews();
@@ -129,6 +140,7 @@ public partial class TicTacToeGameplayController
             gameplayHUDController.SetElapsedTime(0f);
             gameplayHUDController.SetPlayerTurnCounters(player1TurnCount, player2TurnCount);
             gameplayHUDController.SetCurrentTurnToPlayer1();
+            gameplayHUDController.StopHardModeTimerIntro();
         }
 
         StartHardModeTurnTimerIfNeeded();

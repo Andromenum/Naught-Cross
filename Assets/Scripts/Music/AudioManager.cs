@@ -47,35 +47,51 @@ public class AudioManager : MonoBehaviour
         ApplyMusicSettingsInstant();
     }
 
-    public void PlayMusic(AudioClip clip, bool fadeIn = true)
+    public void PlayMusic(AudioClip clip, bool fadeIn = true, bool restartIfSameClip = true)
     {
-        if (clip == null)
+        if (clip == null || audioSource == null)
             return;
+
+        ClearGameplayPauseMusicState();
+        StopCurrentFade();
 
         currentMusicMultiplier = 1f;
 
-        if (audioSource.clip == clip && audioSource.isPlaying)
+        bool sameClip = audioSource.clip == clip;
+
+        if (sameClip && audioSource.isPlaying && !restartIfSameClip)
         {
             audioSource.mute = !MusicEnabled;
 
             if (MusicEnabled)
                 FadeMusicToCurrentTarget(fadeIn ? fadeDuration : 0f);
+            else
+                ApplyMusicSettingsInstant();
 
             return;
         }
 
-        StopCurrentFade();
-        fadeRoutine = StartCoroutine(SwitchMusicRoutine(clip, fadeIn));
+        fadeRoutine = StartCoroutine(SwitchMusicRoutine(clip, fadeIn, restartFromBeginning: true));
+    }
+
+    public void RestartMusic(AudioClip clip, bool fadeIn = true)
+    {
+        PlayMusic(clip, fadeIn, restartIfSameClip: true);
     }
 
     public void StopMusic(bool fadeOut = true)
     {
+        ClearGameplayPauseMusicState();
         StopCurrentFade();
+
+        if (audioSource == null)
+            return;
 
         if (!fadeOut)
         {
             audioSource.Stop();
             audioSource.clip = null;
+            audioSource.volume = GetCurrentTargetVolume();
             return;
         }
 
@@ -84,7 +100,12 @@ public class AudioManager : MonoBehaviour
 
     public void FadeOutMusic(float duration)
     {
+        ClearGameplayPauseMusicState();
         StopCurrentFade();
+
+        if (audioSource == null)
+            return;
+
         fadeRoutine = StartCoroutine(FadeOutAndStopRoutine(duration));
     }
 
@@ -93,7 +114,9 @@ public class AudioManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(sceneName) || isLoadingScene)
             return;
 
+        ClearGameplayPauseMusicState();
         StopCurrentFade();
+
         fadeRoutine = StartCoroutine(FadeOutAndLoadRoutine(sceneName));
     }
 
@@ -124,10 +147,28 @@ public class AudioManager : MonoBehaviour
         PlayerPrefs.SetInt(MusicEnabledKey, enabled ? 1 : 0);
         PlayerPrefs.Save();
 
+        if (audioSource == null)
+            return;
+
         audioSource.mute = !enabled;
 
+        /*
+         * If gameplay pause has paused the music, settings should only change
+         * the preference. It should not restart music inside the pause menu.
+         */
+        if (musicPausedByPauseMenu)
+        {
+            ApplyMusicSettingsInstant();
+            return;
+        }
+
         if (enabled && audioSource.clip != null && !audioSource.isPlaying)
-            audioSource.Play();
+        {
+            audioSource.UnPause();
+
+            if (!audioSource.isPlaying)
+                audioSource.Play();
+        }
 
         ApplyMusicSettingsInstant();
     }
@@ -142,14 +183,22 @@ public class AudioManager : MonoBehaviour
         ApplyMusicSettingsInstant();
     }
 
-    private IEnumerator SwitchMusicRoutine(AudioClip newClip, bool fadeIn)
+    private IEnumerator SwitchMusicRoutine(AudioClip newClip, bool fadeIn, bool restartFromBeginning)
     {
-        if (audioSource.isPlaying && MusicEnabled)
+        if (audioSource == null)
+            yield break;
+
+        bool changingClip = audioSource.clip != newClip;
+
+        if (changingClip && audioSource.isPlaying && MusicEnabled)
             yield return FadeToRoutine(0f, fadeDuration);
 
         audioSource.Stop();
         audioSource.clip = newClip;
         audioSource.mute = !MusicEnabled;
+
+        if (restartFromBeginning)
+            audioSource.time = 0f;
 
         float targetVolume = GetCurrentTargetVolume();
 
@@ -166,11 +215,15 @@ public class AudioManager : MonoBehaviour
 
     private IEnumerator FadeOutAndStopRoutine(float duration)
     {
+        if (audioSource == null)
+            yield break;
+
         if (audioSource.isPlaying && MusicEnabled)
             yield return FadeToRoutine(0f, duration);
 
         audioSource.Stop();
         audioSource.clip = null;
+        audioSource.volume = GetCurrentTargetVolume();
         fadeRoutine = null;
     }
 
@@ -178,7 +231,7 @@ public class AudioManager : MonoBehaviour
     {
         isLoadingScene = true;
 
-        if (audioSource.isPlaying && MusicEnabled)
+        if (audioSource != null && audioSource.isPlaying && MusicEnabled)
             yield return FadeToRoutine(0f, fadeDuration);
 
         SceneManager.LoadScene(sceneName);
@@ -204,6 +257,8 @@ public class AudioManager : MonoBehaviour
         if (audioSource == null)
             yield break;
 
+        targetVolume = Mathf.Clamp01(targetVolume);
+
         if (duration <= 0f)
         {
             audioSource.volume = targetVolume;
@@ -217,7 +272,9 @@ public class AudioManager : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
+
             audioSource.volume = Mathf.Lerp(startVolume, targetVolume, t);
+
             yield return null;
         }
 
@@ -235,7 +292,7 @@ public class AudioManager : MonoBehaviour
 
     private float GetCurrentTargetVolume()
     {
-        return MusicVolume * currentMusicMultiplier;
+        return Mathf.Clamp01(MusicVolume * currentMusicMultiplier);
     }
 
     private void StopCurrentFade()
@@ -272,6 +329,14 @@ public class AudioManager : MonoBehaviour
         if (wasMusicPlayingBeforePause && MusicEnabled && audioSource.clip != null)
             audioSource.UnPause();
 
+        wasMusicPlayingBeforePause = false;
+
+        ApplyMusicSettingsInstant();
+    }
+
+    private void ClearGameplayPauseMusicState()
+    {
+        musicPausedByPauseMenu = false;
         wasMusicPlayingBeforePause = false;
     }
 }

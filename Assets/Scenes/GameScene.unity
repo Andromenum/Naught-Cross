@@ -502,19 +502,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 36728826}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: GameSelectPopupController, Assembly-CSharp
-        m_MethodName: ClosePopup
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &36728826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -957,7 +945,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 2, y: 0}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -1462,7 +1450,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 2078044698}
         m_TargetAssemblyTypeName: SettingsPopupController, Assembly-CSharp
         m_MethodName: OnMusicSliderChanged
         m_Mode: 0
@@ -2460,7 +2448,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 1, y: 2}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -2914,6 +2902,7 @@ GameObject:
   m_Component:
   - component: {fileID: 279732982}
   - component: {fileID: 279732983}
+  - component: {fileID: 279732984}
   m_Layer: 5
   m_Name: SFXToggle
   m_TagString: Untagged
@@ -3001,6 +2990,20 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   m_IsOn: 1
+--- !u!114 &279732984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 279732981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e47dc443186a8d429f65d591aeeb4b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSFX
+  sfxId: button_click
+  volumeScale: 1
 --- !u!1 &285552833
 GameObject:
   m_ObjectHideFlags: 0
@@ -3132,9 +3135,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '
-
-'
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 125cb55b44b24c4393181402bc6200e6, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 5fdb327856db56c43ac731576e59bfd9, type: 2}
@@ -3161,8 +3162,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 70
-  m_fontSizeBase: 70
+  m_fontSize: 60
+  m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4159,7 +4160,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 0, y: 2}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -5138,7 +5139,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 1, y: 1}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -5182,7 +5183,7 @@ GameObject:
   m_Component:
   - component: {fileID: 528520758}
   m_Layer: 5
-  m_Name: BottomButton
+  m_Name: BottomButtonRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5429,8 +5430,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 250
-  m_fontSizeBase: 250
+  m_fontSize: 200
+  m_fontSizeBase: 200
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -5889,19 +5890,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 566152512}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: GameSelectPopupController, Assembly-CSharp
-        m_MethodName: ClosePopup
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &566152512
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5994,7 +5983,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 2, y: 2}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -6168,7 +6157,7 @@ GameObject:
   m_Component:
   - component: {fileID: 603820201}
   m_Layer: 5
-  m_Name: BottomButton
+  m_Name: BottomButtonRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6417,8 +6406,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 250
-  m_fontSizeBase: 250
+  m_fontSize: 200
+  m_fontSizeBase: 200
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -6847,7 +6836,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 2, y: 1}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -7124,6 +7113,7 @@ GameObject:
   m_Component:
   - component: {fileID: 672217919}
   - component: {fileID: 672217920}
+  - component: {fileID: 672217921}
   m_Layer: 5
   m_Name: SFXToggle
   m_TagString: Untagged
@@ -7198,7 +7188,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 2078044698}
         m_TargetAssemblyTypeName: SettingsPopupController, Assembly-CSharp
         m_MethodName: OnSfxToggleChanged
         m_Mode: 0
@@ -7210,19 +7200,21 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: SFXManager, Assembly-CSharp
-        m_MethodName: PlayButtonClick
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
   m_IsOn: 1
+--- !u!114 &672217921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 672217918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e47dc443186a8d429f65d591aeeb4b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSFX
+  sfxId: button_click
+  volumeScale: 1
 --- !u!1 &683211548
 GameObject:
   m_ObjectHideFlags: 0
@@ -8184,7 +8176,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 1, y: 1}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -9699,7 +9691,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 1, y: 0}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -11593,7 +11585,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 0, y: 1}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -12766,7 +12758,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 1, y: 2}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -14972,7 +14964,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 0, y: 0}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -15794,7 +15786,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 1, y: 0}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -16592,7 +16584,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 2078044698}
         m_TargetAssemblyTypeName: SettingsPopupController, Assembly-CSharp
         m_MethodName: OnSfxSliderChanged
         m_Mode: 0
@@ -17114,7 +17106,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 2, y: 2}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -17441,7 +17433,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 2, y: 1}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -17623,7 +17615,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 0, y: 0}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -17976,9 +17968,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '
-
-'
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 125cb55b44b24c4393181402bc6200e6, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 5fdb327856db56c43ac731576e59bfd9, type: 2}
@@ -18005,8 +17995,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 70
-  m_fontSizeBase: 70
+  m_fontSize: 60
+  m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -18345,7 +18335,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 0, y: 1}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -18784,7 +18774,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 0, y: 2}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -18976,7 +18966,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1776762807}
   m_Layer: 5
-  m_Name: BottomButton
+  m_Name: BottomButtonRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20026,7 +20016,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1873695473}
   m_Layer: 5
-  m_Name: BottomButton
+  m_Name: BottomButtonRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20511,7 +20501,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 2078044698}
         m_TargetAssemblyTypeName: SettingsPopupController, Assembly-CSharp
         m_MethodName: OnMusicToggleChanged
         m_Mode: 0
@@ -22109,7 +22099,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoardCellUI
   gridPosition: {x: 2, y: 0}
   randomScaleAmount: 0.2
-  randomRotationDegrees: 10
+  randomRotationDegrees: 20
   randomPositionJitter: 10
   useRevealAnimation: 1
   revealDirection: 2
@@ -22587,6 +22577,14 @@ MonoBehaviour:
   portraitMenuButton: {fileID: 993904048}
   activeIconColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveIconColor: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+  timerIntroStartScale: 2.75
+  timerIntroOvershootScale: 1
+  timerIntroDuration: 2.6
+  timerIntroOvershootPoint: 0.95
+  landscapePlayer1TimerOffset: {x: 60, y: 0}
+  landscapePlayer2TimerOffset: {x: -60, y: 0}
+  portraitPlayer1TimerOffset: {x: 0, y: 0}
+  portraitPlayer2TimerOffset: {x: 0, y: 0}
 --- !u!114 &2078044695
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,6 +18,7 @@ public class PlayerHUDRefs
     public GameObject TurnIndicatorRoot => turnIndicatorRoot;
     public TMP_Text TurnCounterText => turnCounterText;
     public TMP_Text HardModeTimerText => hardModeTimerText;
+    public RectTransform HardModeTimerRect => hardModeTimerText != null ? hardModeTimerText.rectTransform : null;
 }
 
 [System.Serializable]
@@ -57,6 +60,21 @@ public class GameplayHUDController : MonoBehaviour
     [SerializeField] private Color activeIconColor = Color.white;
     [SerializeField] private Color inactiveIconColor = new Color(0.35f, 0.35f, 0.35f, 1f);
 
+    [Header("Hard Mode Timer Intro")]
+    [SerializeField] private float timerIntroStartScale = 2.75f;
+    [SerializeField] private float timerIntroOvershootScale = 1.15f;
+    [SerializeField] private float timerIntroDuration = 2.6f;
+    [SerializeField, Range(0.1f, 0.95f)] private float timerIntroOvershootPoint = 0.78f;
+
+    [Header("Hard Mode Timer Intro Start Offsets")]
+    [SerializeField] private Vector2 landscapePlayer1TimerOffset;
+    [SerializeField] private Vector2 landscapePlayer2TimerOffset;
+    [SerializeField] private Vector2 portraitPlayer1TimerOffset;
+    [SerializeField] private Vector2 portraitPlayer2TimerOffset;
+
+    private readonly Dictionary<RectTransform, Vector3> hardModeTimerBaseScales = new Dictionary<RectTransform, Vector3>();
+    private readonly Dictionary<RectTransform, Vector2> hardModeTimerBasePositions = new Dictionary<RectTransform, Vector2>();
+
     private string player1Name;
     private string player2Name;
     private Sprite player1Icon;
@@ -65,6 +83,14 @@ public class GameplayHUDController : MonoBehaviour
     private bool hasData;
     private int currentTurnPlayer = 1;
 
+    private bool hardModeTimersShouldBeVisible;
+    private bool hardModeTimerValuesInitialized;
+    private float cachedPlayer1HardModeSeconds;
+    private float cachedPlayer2HardModeSeconds;
+
+    private Coroutine hardModeTimerIntroRoutine;
+    private bool hardModeTimerIntroPlaying;
+
     private void Awake()
     {
         if (landscapeView != null && landscapeView.Root != null)
@@ -72,6 +98,8 @@ public class GameplayHUDController : MonoBehaviour
 
         if (portraitView != null && portraitView.Root != null)
             portraitView.Root.SetActive(false);
+
+        CacheHardModeTimerBaseTransforms();
     }
 
     private void OnEnable()
@@ -84,6 +112,8 @@ public class GameplayHUDController : MonoBehaviour
     {
         if (UILayoutController.Instance != null)
             UILayoutController.Instance.LayoutChanged -= HandleLayoutChanged;
+
+        StopHardModeTimerIntro();
     }
 
     private void Start()
@@ -92,7 +122,18 @@ public class GameplayHUDController : MonoBehaviour
         RefreshAllViews();
         RefreshTurnIndicators();
         HideCountdown();
-        SetHardModePlayerTimersVisible(false);
+
+        if (!hardModeTimerValuesInitialized)
+            SetHardModePlayerTimers(0f, 0f);
+
+        ApplyHardModeTimerStateToAllViews();
+    }
+
+    private void OnValidate()
+    {
+        timerIntroStartScale = Mathf.Max(1f, timerIntroStartScale);
+        timerIntroOvershootScale = Mathf.Max(1f, timerIntroOvershootScale);
+        timerIntroDuration = Mathf.Max(0f, timerIntroDuration);
     }
 
     public void LoadFromSession()
@@ -123,6 +164,7 @@ public class GameplayHUDController : MonoBehaviour
         RefreshLayoutVisibility();
         RefreshAllViews();
         RefreshTurnIndicators();
+        ApplyHardModeTimerStateToAllViews();
     }
 
     public void SetupHUD(string newPlayer1Name, Sprite newPlayer1Icon, string newPlayer2Name, Sprite newPlayer2Icon)
@@ -138,6 +180,7 @@ public class GameplayHUDController : MonoBehaviour
         RefreshLayoutVisibility();
         RefreshAllViews();
         RefreshTurnIndicators();
+        ApplyHardModeTimerStateToAllViews();
     }
 
     public void SetCurrentTurnToPlayer1()
@@ -180,24 +223,29 @@ public class GameplayHUDController : MonoBehaviour
 
     public void SetHardModePlayerTimersVisible(bool visible)
     {
-        SetHardModePlayerTimerVisible(landscapeView != null ? landscapeView.Player1 : null, visible);
-        SetHardModePlayerTimerVisible(landscapeView != null ? landscapeView.Player2 : null, visible);
+        hardModeTimersShouldBeVisible = visible;
 
-        SetHardModePlayerTimerVisible(portraitView != null ? portraitView.Player1 : null, visible);
-        SetHardModePlayerTimerVisible(portraitView != null ? portraitView.Player2 : null, visible);
+        if (!visible)
+            StopHardModeTimerIntro();
+
+        ApplyHardModeTimerVisibilityToAllViews();
+
+        if (!hardModeTimerIntroPlaying)
+            ResetAllHardModeTimerTransforms();
     }
 
     public void SetHardModePlayerTimers(float player1Seconds, float player2Seconds)
     {
-        string p1Value = "TIME " + Mathf.Max(0f, player1Seconds).ToString("0.0") + "s";
-        string p2Value = "TIME " + Mathf.Max(0f, player2Seconds).ToString("0.0") + "s";
+        cachedPlayer1HardModeSeconds = Mathf.Max(0f, player1Seconds);
+        cachedPlayer2HardModeSeconds = Mathf.Max(0f, player2Seconds);
+        hardModeTimerValuesInitialized = true;
 
-        SetHardModePlayerTimer(landscapeView != null ? landscapeView.Player1 : null, p1Value);
-        SetHardModePlayerTimer(landscapeView != null ? landscapeView.Player2 : null, p2Value);
+        ApplyHardModeTimerTextToAllViews();
 
-        SetHardModePlayerTimer(portraitView != null ? portraitView.Player1 : null, p1Value);
-        SetHardModePlayerTimer(portraitView != null ? portraitView.Player2 : null, p2Value);
+        if (!hardModeTimerIntroPlaying)
+            ResetAllHardModeTimerTransforms();
     }
+
     public void SetHardModeTurnTimerVisible(bool visible)
     {
         SetHardModePlayerTimersVisible(visible);
@@ -206,6 +254,44 @@ public class GameplayHUDController : MonoBehaviour
     public void SetHardModeTurnTimer(float seconds)
     {
         SetHardModePlayerTimers(seconds, seconds);
+    }
+
+    public void PlayHardModeTimerIntro()
+    {
+        if (!hardModeTimerValuesInitialized)
+            SetHardModePlayerTimers(0f, 0f);
+
+        CacheHardModeTimerBaseTransforms();
+
+        if (hardModeTimerIntroRoutine != null)
+            StopCoroutine(hardModeTimerIntroRoutine);
+
+        hardModeTimerIntroPlaying = true;
+
+        SetHardModePlayerTimersVisible(true);
+        SetAllHardModeTimerScales(timerIntroStartScale);
+        ApplyAllHardModeTimerOffsets(1f);
+
+        if (timerIntroDuration <= 0f)
+        {
+            hardModeTimerIntroPlaying = false;
+            ResetAllHardModeTimerTransforms();
+            return;
+        }
+
+        hardModeTimerIntroRoutine = StartCoroutine(HardModeTimerIntroRoutine());
+    }
+
+    public void StopHardModeTimerIntro()
+    {
+        if (hardModeTimerIntroRoutine != null)
+        {
+            StopCoroutine(hardModeTimerIntroRoutine);
+            hardModeTimerIntroRoutine = null;
+        }
+
+        hardModeTimerIntroPlaying = false;
+        ResetAllHardModeTimerTransforms();
     }
 
     public void ShowCountdown(string value)
@@ -244,11 +330,198 @@ public class GameplayHUDController : MonoBehaviour
         SetIconColor(portraitView != null ? portraitView.Player2 : null, activeIconColor);
     }
 
+    private IEnumerator HardModeTimerIntroRoutine()
+    {
+        float elapsed = 0f;
+
+        while (elapsed < timerIntroDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            float normalized = Mathf.Clamp01(elapsed / timerIntroDuration);
+
+            float scaleMultiplier = EvaluateTimerIntroScale(normalized);
+            float offsetMultiplier = EvaluateTimerIntroOffset(normalized);
+
+            SetAllHardModeTimerScales(scaleMultiplier);
+            ApplyAllHardModeTimerOffsets(offsetMultiplier);
+
+            yield return null;
+        }
+
+        hardModeTimerIntroPlaying = false;
+        ResetAllHardModeTimerTransforms();
+
+        hardModeTimerIntroRoutine = null;
+    }
+
+    private float EvaluateTimerIntroScale(float normalized)
+    {
+        float split = Mathf.Clamp(timerIntroOvershootPoint, 0.1f, 0.95f);
+
+        if (normalized <= split)
+        {
+            float localT = Mathf.Clamp01(normalized / split);
+            float easedT = 1f - Mathf.Pow(1f - localT, 3f);
+
+            return Mathf.Lerp(timerIntroStartScale, timerIntroOvershootScale, easedT);
+        }
+
+        float settleT = Mathf.Clamp01((normalized - split) / (1f - split));
+        float easedSettleT = Mathf.SmoothStep(0f, 1f, settleT);
+
+        return Mathf.Lerp(timerIntroOvershootScale, 1f, easedSettleT);
+    }
+
+    private float EvaluateTimerIntroOffset(float normalized)
+    {
+        float t = Mathf.Clamp01(normalized);
+        float easedT = Mathf.SmoothStep(0f, 1f, t);
+
+        return Mathf.Lerp(1f, 0f, easedT);
+    }
+
+    private void SetAllHardModeTimerScales(float scaleMultiplier)
+    {
+        SetHardModeTimerScale(landscapeView != null ? landscapeView.Player1 : null, scaleMultiplier);
+        SetHardModeTimerScale(landscapeView != null ? landscapeView.Player2 : null, scaleMultiplier);
+
+        SetHardModeTimerScale(portraitView != null ? portraitView.Player1 : null, scaleMultiplier);
+        SetHardModeTimerScale(portraitView != null ? portraitView.Player2 : null, scaleMultiplier);
+    }
+
+    private void SetHardModeTimerScale(PlayerHUDRefs playerView, float scaleMultiplier)
+    {
+        if (playerView == null || playerView.HardModeTimerRect == null)
+            return;
+
+        RectTransform timerRect = playerView.HardModeTimerRect;
+        CacheHardModeTimerBaseTransform(timerRect);
+
+        if (!hardModeTimerBaseScales.TryGetValue(timerRect, out Vector3 baseScale))
+            baseScale = Vector3.one;
+
+        timerRect.localScale = baseScale * scaleMultiplier;
+    }
+
+    private void CacheHardModeTimerBaseTransforms()
+    {
+        CacheHardModeTimerBaseTransform(landscapeView != null ? landscapeView.Player1 : null);
+        CacheHardModeTimerBaseTransform(landscapeView != null ? landscapeView.Player2 : null);
+
+        CacheHardModeTimerBaseTransform(portraitView != null ? portraitView.Player1 : null);
+        CacheHardModeTimerBaseTransform(portraitView != null ? portraitView.Player2 : null);
+    }
+
+    private void CacheHardModeTimerBaseTransform(PlayerHUDRefs playerView)
+    {
+        if (playerView == null)
+            return;
+
+        CacheHardModeTimerBaseTransform(playerView.HardModeTimerRect);
+    }
+
+    private void CacheHardModeTimerBaseTransform(RectTransform timerRect)
+    {
+        if (timerRect == null)
+            return;
+
+        if (!hardModeTimerBaseScales.ContainsKey(timerRect))
+            hardModeTimerBaseScales.Add(timerRect, timerRect.localScale);
+
+        if (!hardModeTimerBasePositions.ContainsKey(timerRect))
+            hardModeTimerBasePositions.Add(timerRect, timerRect.anchoredPosition);
+    }
+
+    private void ApplyHardModeTimerStateToAllViews()
+    {
+        ApplyHardModeTimerTextToAllViews();
+        ApplyHardModeTimerVisibilityToAllViews();
+
+        if (!hardModeTimerIntroPlaying)
+            ResetAllHardModeTimerTransforms();
+    }
+
+    private void ApplyHardModeTimerTextToAllViews()
+    {
+        string p1Value = "TIME " + cachedPlayer1HardModeSeconds.ToString("0.0") + "s";
+        string p2Value = "TIME " + cachedPlayer2HardModeSeconds.ToString("0.0") + "s";
+
+        SetHardModePlayerTimer(landscapeView != null ? landscapeView.Player1 : null, p1Value);
+        SetHardModePlayerTimer(landscapeView != null ? landscapeView.Player2 : null, p2Value);
+
+        SetHardModePlayerTimer(portraitView != null ? portraitView.Player1 : null, p1Value);
+        SetHardModePlayerTimer(portraitView != null ? portraitView.Player2 : null, p2Value);
+    }
+
+    private void ApplyHardModeTimerVisibilityToAllViews()
+    {
+        SetHardModePlayerTimerVisible(
+            landscapeView != null ? landscapeView.Player1 : null,
+            hardModeTimersShouldBeVisible);
+
+        SetHardModePlayerTimerVisible(
+            landscapeView != null ? landscapeView.Player2 : null,
+            hardModeTimersShouldBeVisible);
+
+        SetHardModePlayerTimerVisible(
+            portraitView != null ? portraitView.Player1 : null,
+            hardModeTimersShouldBeVisible);
+
+        SetHardModePlayerTimerVisible(
+            portraitView != null ? portraitView.Player2 : null,
+            hardModeTimersShouldBeVisible);
+    }
+
+    private void ApplyAllHardModeTimerOffsets(float offsetMultiplier)
+    {
+        ApplyHardModeTimerOffset(
+            landscapeView != null ? landscapeView.Player1 : null,
+            landscapePlayer1TimerOffset,
+            offsetMultiplier);
+
+        ApplyHardModeTimerOffset(
+            landscapeView != null ? landscapeView.Player2 : null,
+            landscapePlayer2TimerOffset,
+            offsetMultiplier);
+
+        ApplyHardModeTimerOffset(
+            portraitView != null ? portraitView.Player1 : null,
+            portraitPlayer1TimerOffset,
+            offsetMultiplier);
+
+        ApplyHardModeTimerOffset(
+            portraitView != null ? portraitView.Player2 : null,
+            portraitPlayer2TimerOffset,
+            offsetMultiplier);
+    }
+
+    private void ApplyHardModeTimerOffset(PlayerHUDRefs playerView, Vector2 offset, float offsetMultiplier)
+    {
+        if (playerView == null || playerView.HardModeTimerRect == null)
+            return;
+
+        RectTransform timerRect = playerView.HardModeTimerRect;
+        CacheHardModeTimerBaseTransform(timerRect);
+
+        if (!hardModeTimerBasePositions.TryGetValue(timerRect, out Vector2 basePosition))
+            return;
+
+        timerRect.anchoredPosition = basePosition + (offset * offsetMultiplier);
+    }
+
+    private void ResetAllHardModeTimerTransforms()
+    {
+        SetAllHardModeTimerScales(1f);
+        ApplyAllHardModeTimerOffsets(0f);
+    }
+
     private void HandleLayoutChanged(bool isPortrait)
     {
         RefreshLayoutVisibility();
         RefreshAllViews();
         RefreshTurnIndicators();
+        ApplyHardModeTimerStateToAllViews();
     }
 
     private void RefreshLayoutVisibility()

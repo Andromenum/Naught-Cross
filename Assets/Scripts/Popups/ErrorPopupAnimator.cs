@@ -4,11 +4,16 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
+[RequireComponent(typeof(RectTransform))]
+[RequireComponent(typeof(Image))]
 public class ErrorPopupAnimator : MonoBehaviour
 {
-    [SerializeField] private RectTransform animatedRoot;
+    [Header("References")]
     [SerializeField] private TMP_Text messageText;
-    [SerializeField] private Image backgroundImage;
+
+    [Header("Audio")]
+    [SerializeField] private string errorSfxId = "error";
+    [SerializeField, Range(0f, 1f)] private float errorSfxVolumeScale = 1f;
 
     [Header("Timing")]
     [SerializeField] private float scaleInDuration = 0.12f;
@@ -24,29 +29,37 @@ public class ErrorPopupAnimator : MonoBehaviour
     [SerializeField] private Vector3 hiddenScale = Vector3.zero;
     [SerializeField] private Vector3 shownScale = Vector3.one;
 
+    private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
+    private Image backgroundImage;
     private Coroutine animationRoutine;
 
     private void Awake()
     {
+        rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
-
-        if (animatedRoot == null)
-            animatedRoot = transform as RectTransform;
+        backgroundImage = GetComponent<Image>();
 
         if (messageText == null)
             messageText = GetComponentInChildren<TMP_Text>(true);
 
-        if (backgroundImage == null)
-            backgroundImage = GetComponent<Image>();
-
         ForceHiddenImmediate();
+    }
+
+    private void OnValidate()
+    {
+        scaleInDuration = Mathf.Max(0f, scaleInDuration);
+        flashDuration = Mathf.Max(0f, flashDuration);
+        scaleOutDuration = Mathf.Max(0f, scaleOutDuration);
+        flashFrequency = Mathf.Max(0f, flashFrequency);
     }
 
     public void ShowError(string message)
     {
         if (messageText != null)
             messageText.text = message;
+
+        PlayErrorSfx();
 
         if (animationRoutine != null)
             StopCoroutine(animationRoutine);
@@ -71,10 +84,21 @@ public class ErrorPopupAnimator : MonoBehaviour
         ForceHiddenImmediate();
     }
 
+    private void PlayErrorSfx()
+    {
+        if (SFXManager.Instance == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(errorSfxId))
+            return;
+
+        SFXManager.Instance.PlayById(errorSfxId, errorSfxVolumeScale);
+    }
+
     private void ForceHiddenImmediate()
     {
-        if (animatedRoot != null)
-            animatedRoot.localScale = hiddenScale;
+        if (rectTransform != null)
+            rectTransform.localScale = hiddenScale;
 
         if (canvasGroup != null)
         {
@@ -89,8 +113,8 @@ public class ErrorPopupAnimator : MonoBehaviour
 
     private IEnumerator ShowRoutine()
     {
-        if (animatedRoot != null)
-            animatedRoot.localScale = hiddenScale;
+        if (rectTransform != null)
+            rectTransform.localScale = hiddenScale;
 
         if (canvasGroup != null)
         {
@@ -107,19 +131,21 @@ public class ErrorPopupAnimator : MonoBehaviour
         while (elapsed < scaleInDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / scaleInDuration);
 
-            if (animatedRoot != null)
-                animatedRoot.localScale = Vector3.Lerp(hiddenScale, shownScale, t);
+            float t = Mathf.Clamp01(elapsed / scaleInDuration);
+            float easedT = Mathf.SmoothStep(0f, 1f, t);
+
+            if (rectTransform != null)
+                rectTransform.localScale = Vector3.Lerp(hiddenScale, shownScale, easedT);
 
             if (canvasGroup != null)
-                canvasGroup.alpha = Mathf.Lerp(0f, 1f, t);
+                canvasGroup.alpha = Mathf.Lerp(0f, 1f, easedT);
 
             yield return null;
         }
 
-        if (animatedRoot != null)
-            animatedRoot.localScale = shownScale;
+        if (rectTransform != null)
+            rectTransform.localScale = shownScale;
 
         if (canvasGroup != null)
             canvasGroup.alpha = 1f;
@@ -142,19 +168,22 @@ public class ErrorPopupAnimator : MonoBehaviour
             backgroundImage.color = flashBrightColor;
 
         elapsed = 0f;
-        Vector3 startScale = animatedRoot != null ? animatedRoot.localScale : shownScale;
+
+        Vector3 startScale = rectTransform != null ? rectTransform.localScale : shownScale;
         float startAlpha = canvasGroup != null ? canvasGroup.alpha : 1f;
 
         while (elapsed < scaleOutDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / scaleOutDuration);
 
-            if (animatedRoot != null)
-                animatedRoot.localScale = Vector3.Lerp(startScale, hiddenScale, t);
+            float t = Mathf.Clamp01(elapsed / scaleOutDuration);
+            float easedT = Mathf.SmoothStep(0f, 1f, t);
+
+            if (rectTransform != null)
+                rectTransform.localScale = Vector3.Lerp(startScale, hiddenScale, easedT);
 
             if (canvasGroup != null)
-                canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, t);
+                canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, easedT);
 
             yield return null;
         }
