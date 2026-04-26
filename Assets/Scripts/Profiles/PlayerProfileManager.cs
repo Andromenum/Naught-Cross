@@ -199,6 +199,7 @@ public class PlayerProfilesManager : MonoBehaviour
         {
             string json = JsonUtility.ToJson(saveData, true);
             File.WriteAllText(SavePath, json);
+            WebGLSaveSync.Flush();
         }
         catch (Exception ex)
         {
